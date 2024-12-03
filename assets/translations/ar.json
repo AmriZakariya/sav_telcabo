@@ -1,0 +1,41 @@
+{
+  "msg":"{} are written in the {} language",
+  "msg_named":"Easy localization are written in the {lang} language",
+  "msg_mixed":"{} are written in the {lang} language",
+  "gender":{
+    "male":"Hi man ;) {}",
+    "female":"Hello girl :) {}",
+    "other":"Hello {}"
+  },
+
+  "app_name" : "Allo Mairie Rabat",
+  "call us" : "اتصل بالرقم المجاني",
+  "full name" : "الإسم الكامل",
+  "details" : "التفاصيل",
+  "pick photos" : "اختر الصور",
+  "categories" : "التصنيفات",
+  "submit" : "إرسال",
+  "please enter a valid phone number" : "يرجى إدخال رقم هاتف صالح",
+  "submit_title" : "تقديم شكاية / اقتراح",
+  "phone number" : "رقم الهاتف",
+  "track" : "تتبع شكاياتي",
+  "statistics" : "إحصائيات",
+  "complaint numbers" : "أرقام الشكايات",
+
+  "nbr_reclamation_recu" : "عدد الشكاوى المستلمة",
+  "reclamation_traitées" :"الشكاوى المعالجة" ,
+  "delai_moyen_traitement" : "متوسط ​​وقت المعالجة بالأيام" ,
+  "reclamation_re_ouverts": "إعادة فتح الشكاوى" ,
+  "reclamation_satisfaites" : "نسبة الرضى عن معالجة الشكاوى",
+
+  "reclamation_recu" : "الشكاوى المستلمة",
+  "reclamation_num" : "رقم الشكاية",
+  "search" : "إبحت",
+  "status" : "الحالة",
+  "guid_info" :  "دليل المعلومات",
+  "choisir_localisation" : "اختيار موقع",
+  "annuaires_telehoniques" : "دليل الهاتف",
+  "email" : "البريد الالكتروني ",
+  "cin" : " رقم البطاقة الوطنية"
+
+}

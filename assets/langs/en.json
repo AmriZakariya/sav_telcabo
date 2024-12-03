@@ -1,0 +1,27 @@
+{
+  "sign_up": "Sign Up",
+  "first_name": "First Name",
+  "enter_first_name": "Enter your first name",
+  "last_name": "Last Name",
+  "enter_last_name": "Enter your last name",
+  "email": "Email",
+  "enter_email": "Enter your email",
+  "password": "Password",
+  "sign_up_button": "Sign Up",
+  "validation": {
+    "first_name_required": "First name is required",
+    "last_name_required": "Last name is required",
+    "email_required": "Email is required",
+    "email_invalid": "Please enter a valid email address",
+    "password_required": "Password is required",
+    "password_too_short": "Password must be at least 6 characters long"
+  },
+  "welcome_back": "Welcome back!",
+  "enter_password": "Enter your password",
+  "email_required": "Email is required",
+  "password_required": "Password is required",
+  "forgot_password": "Forgot Password?",
+  "login": "Login",
+  "no_account": "Don't have an account?",
+  "login_google": "Login with Google"
+}

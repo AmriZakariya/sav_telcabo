@@ -1,0 +1,29 @@
+{
+  "sign_up": "Registrieren",
+  "first_name": "Vorname",
+  "enter_first_name": "Geben Sie Ihren Vornamen ein",
+  "last_name": "Nachname",
+  "enter_last_name": "Geben Sie Ihren Nachnamen ein",
+  "email": "E-Mail",
+  "enter_email": "Geben Sie Ihre E-Mail-Adresse ein",
+  "password": "Passwort",
+  "sign_up_button": "Registrieren",
+  "validation": {
+    "first_name_required": "Vorname ist erforderlich",
+    "last_name_required": "Nachname ist erforderlich",
+    "email_required": "E-Mail ist erforderlich",
+    "email_invalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "password_required": "Passwort ist erforderlich",
+    "password_too_short": "Das Passwort muss mindestens 6 Zeichen lang sein"
+  },
+  "welcome_back": "Willkommen zurück!",
+  "enter_password": "Geben Sie Ihr Passwort ein",
+  "email_required": "E-Mail ist erforderlich",
+  "invalid_email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+  "password_required": "Passwort ist erforderlich",
+  "forgot_password": "Passwort vergessen?",
+  "login": "Einloggen",
+  "no_account": "Noch kein Konto?",
+  "continue_as_guest": "Weiter als Gast",
+  "login_google": "Mit Google einloggen"
+}

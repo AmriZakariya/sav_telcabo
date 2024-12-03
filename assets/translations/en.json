@@ -1,0 +1,43 @@
+{
+  "msg":"{} are written in the {} language",
+  "msg_named":"Easy localization are written in the {lang} language",
+  "msg_mixed":"{} are written in the {lang} language",
+  "gender":{
+    "male":"Hi man ;) {}",
+    "female":"Hello girl :) {}",
+    "other":"Hello {}"
+  },
+
+  "app_name" : "Allo Mairie Rabat",
+  "call us" : "Appelez le numéro vert",
+  "full name" : "le nom complet",
+  "details" : "les détails",
+  "pick photos" : "choisir des photos",
+  "categories" : "catégories",
+  "submit" : "envoyer",
+  "please enter a valid phone number" : "merci de saisir un numéro de téléphone valide",
+  "submit_title" : "Soumettre Réclamation / Suggestion",
+  "phone number" : "numéro de téléphone",
+  "track" : "Suivre mes réclamations",
+  "statistics" : "statistiques",
+  "complaint numbers" : "Numéros de réclamation",
+  "nbr_reclamation_recu" : "Nombre de réclamations reçues",
+  "reclamation_traitées" : "Reclamations traitées ",
+  "delai_moyen_traitement" : " Délai moyen de traitement en jours",
+  "reclamation_re_ouverts" : "Réclamations ré ouvertes",
+  "reclamation_satisfaites" : "Réclamations satisfaites",
+  "aujourdhui" : "aujourd'hui",
+  "rejete" : "rejeté",
+
+  "reclamation_recu" : "réclamations reçues",
+  "reclamation_num" : "numero de réclamation",
+  "search" : "Rechercher",
+  "status" : "status",
+  "guid_info" : "Guide d'information",
+  "choisir_localisation" : "Choisir localisation",
+  "annuaires_telehoniques" : "Annuaires téléphoniques",
+  "email" : "e-mail",
+  "cin" : " numéro CIN",
+  "re" : " numéro CIN"
+
+}
