@@ -2,35 +2,21 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-// import 'package:http/http.dart' as http;
-
-import 'package:collection/collection.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cool_alert/cool_alert.dart';
-import 'package:dartx/dartx.dart';
-
 // import 'package:dartx/dartx.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_logger/dio_logger.dart';
 import 'package:floating_action_bubble/floating_action_bubble.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:flutter_social_share_plugin/flutter_social_share.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:image/image.dart' as imagePLugin;
-import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:telcabo/Tools.dart';
 import 'package:telcabo/ToolsExtra.dart';
 import 'package:telcabo/custome/ConnectivityCheckBlocBuilder.dart';
-import 'package:telcabo/custome/ImageFieldBlocbuilder.dart';
-import 'package:telcabo/custome/QrScannerTextFieldBlocBuilder.dart';
-import 'package:telcabo/models/response_get_liste_etats.dart';
 import 'package:telcabo/models/response_get_liste_pannes.dart';
-import 'package:telcabo/models/response_get_liste_types.dart';
 import 'package:telcabo/ui/InterventionHeaderInfoWidget.dart';
 import 'package:telcabo/ui/LoadingDialog.dart';
 import 'package:timelines/timelines.dart';

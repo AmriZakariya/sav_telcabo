@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_logger/dio_logger.dart';
 import 'package:flutter/material.dart';
+
 // import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -15,8 +16,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:telcabo/custome/ConnectivityCheckBlocBuilder.dart';
 import 'package:telcabo/models/response_get_demandes.dart';
-import 'package:telcabo/models/response_get_liste_etats.dart';
-import 'package:telcabo/models/response_get_liste_types.dart';
 
 import 'models/response_get_liste_pannes.dart';
 
@@ -24,7 +23,7 @@ class Tools {
   // static String baseUrl = "https://telcabo.castlit.com" ;
   // static String baseUrl = "https://crmtelcabo.com" ;
   // static String baseUrl = "https://sav.castlit.com";
-    static String baseUrl = "https://sav.crmtelcabo.com";
+  static String baseUrl = "https://sav.crmtelcabo.com";
 
   static bool localWatermark = false;
 
@@ -66,8 +65,7 @@ class Tools {
     return languageCode;
   }
 
-  static File fileEtatsList = File("");
-  static File fileListType = File("");
+  static File filePannesList = File("");
   static File fileDemandesList = File("");
   static File fileTraitementList = File("");
 
@@ -75,18 +73,12 @@ class Tools {
     print("initFiles!");
     try {
       getApplicationDocumentsDirectory().then((Directory directory) {
-        fileEtatsList = new File(directory.path + "/fileEtatsList.json");
-        fileListType = new File(directory.path + "/fileListType.json");
+        filePannesList = new File(directory.path + "/filePannesList.json");
         fileDemandesList = new File(directory.path + "/fileDemandesList.json");
-        fileTraitementList =
-            new File(directory.path + "/fileTraitementList.json");
+        fileTraitementList = new File(directory.path + "/fileTraitementList.json");
 
-        if (!fileEtatsList.existsSync()) {
-          fileEtatsList.createSync();
-        }
-
-        if (!fileListType.existsSync()) {
-          fileListType.createSync();
+        if (!filePannesList.existsSync()) {
+          filePannesList.createSync();
         }
 
         if (!fileDemandesList.existsSync()) {
@@ -102,157 +94,52 @@ class Tools {
     }
   }
 
-  static Future<ResponseGetListEtat> callWSGetEtats() async {
-    print("****** callWSGetEtats ***");
+  static Future<ResponseGetListPannes> callWSGetPannes() async {
+    print("****** callWSGetPannes ******");
 
-    Response response;
     try {
-      Dio dio = new Dio();
+      Dio dio = Dio();
       dio.interceptors.add(dioLoggerInterceptor);
 
-      response = await dio.get("${Tools.baseUrl}/etats/liste_etats");
+      final response = await dio.get("${Tools.baseUrl}/pannes/get_pannes");
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.data}');
+      print('[WS GET_PANNES] Response status: ${response.statusCode}');
+      print('[WS GET_PANNES] Response body: ${response.data}');
 
       if (response.statusCode == 200) {
-        var responseApiHome = jsonDecode(response.data);
-        writeToFileEtatsList(responseApiHome);
+        if (response.data != null && response.data.isNotEmpty) {
+          try {
+            final responseApiHome = jsonDecode(response.data);
 
-        ResponseGetListEtat etats =
-            ResponseGetListEtat.fromJson(responseApiHome);
-        print(etats);
-
-        return etats;
-      } else {
-        throw Exception('error fetching posts');
-      }
-    } on DioError catch (e) {
-      print("**************DioError***********");
-      print(e);
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx and is also not 304.
-      if (e.response != null) {
-        //        print(e.response.data);
-        //        print(e.response.headers);
-        //        print(e.response.);
-        //           print("**->REQUEST ${e.response?.re.uri}#${Transformer.urlEncodeMap(e.response?.request.data)} ");
-        throw (e.response?.statusMessage ?? "");
-      } else {
-        // Something happened in setting up or sending the request that triggered an Error
-        //        print(e.request);
-        //        print(e.message);
-      }
-    } catch (e) {
-      // throw ('API ERROR');
-      print("API ERROR ${e}");
-      return ResponseGetListEtat(etat: []);
-    }
-
-    return Tools.readfileEtatsList();
-    // return ResponseGetListEtat(etat: []);
-  }
-
-    static Future<ResponseGetListPannes> callWSGetPannes() async {
-      print("****** callWSGetPannes ******");
-
-      try {
-        Dio dio = Dio();
-        dio.interceptors.add(dioLoggerInterceptor);
-
-        final response = await dio.get("${Tools.baseUrl}/pannes/get_pannes");
-
-        print('[WS GET_PANNES] Response status: ${response.statusCode}');
-        print('[WS GET_PANNES] Response body: ${response.data}');
-
-        if (response.statusCode == 200) {
-          if (response.data != null && response.data.isNotEmpty) {
-            try {
-              final responseApiHome = jsonDecode(response.data);
-
-              final pannesList = ResponseGetListPannes.fromJson(responseApiHome);
-              print(pannesList);
-              return pannesList;
-            } catch (e) {
-              print("[WS GET_PANNES] Error decoding response: $e");
-              throw Exception("Failed to parse response");
-            }
-          } else {
-            print("[WS GET_PANNES] Empty or null response data");
-            throw Exception("Empty response");
+            final pannesList = ResponseGetListPannes.fromJson(responseApiHome);
+            print(pannesList);
+            return pannesList;
+          } catch (e) {
+            print("[WS GET_PANNES] Error decoding response: $e");
+            throw Exception("Failed to parse response");
           }
         } else {
-          print("[WS GET_PANNES] Non-200 response: ${response.statusCode}");
-          throw Exception('Error fetching pannes');
+          print("[WS GET_PANNES] Empty or null response data");
+          throw Exception("Empty response");
         }
-      } on DioError catch (e) {
-        print("************** DioError **************");
-        if (e.response != null) {
-          print("[WS GET_PANNES] Server error: ${e.response?.statusMessage}");
-          throw Exception(e.response?.statusMessage ?? "Unknown server error");
-        } else {
-          print("[WS GET_PANNES] Request setup error: ${e.message}");
-          throw Exception("Request error: ${e.message}");
-        }
-      } catch (e) {
-        print("[WS GET_PANNES] Unexpected error: $e");
-        return ResponseGetListPannes(pannes: []); // Returning empty list in case of error
+      } else {
+        print("[WS GET_PANNES] Non-200 response: ${response.statusCode}");
+        throw Exception('Error fetching pannes');
       }
-
+    } on DioError catch (e) {
+      print("************** DioError **************");
+      if (e.response != null) {
+        print("[WS GET_PANNES] Server error: ${e.response?.statusMessage}");
+        throw Exception(e.response?.statusMessage ?? "Unknown server error");
+      } else {
+        print("[WS GET_PANNES] Request setup error: ${e.message}");
+        throw Exception("Request error: ${e.message}");
+      }
+    } catch (e) {
+      print("[WS GET_PANNES] Unexpected error: $e");
       // Fallback to local cache if all else fails
       return Tools.readfilePannesList();
     }
-
-
-    static Future<ResponseGetListType> callWSGetlisteTypes() async {
-    print("****** callWSGetlisteTypes ***");
-
-    Response response;
-    try {
-      Dio dio = new Dio();
-      dio.interceptors.add(dioLoggerInterceptor);
-
-      response = await dio.get("${Tools.baseUrl}/etats/liste_types");
-
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.data}');
-
-      if (response.statusCode == 200) {
-        var responseApiHome = jsonDecode(response.data);
-        writeToFileTypeInstallationList(responseApiHome);
-
-        ResponseGetListType etats =
-            ResponseGetListType.fromJson(responseApiHome);
-        print(etats);
-
-        return etats;
-      } else {
-        throw Exception('error fetching posts');
-      }
-    } on DioError catch (e) {
-      print("**************DioError***********");
-      print(e);
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx and is also not 304.
-      if (e.response != null) {
-        //        print(e.response.data);
-        //        print(e.response.headers);
-        //        print(e.response.);
-        //           print("**->REQUEST ${e.response?.re.uri}#${Transformer.urlEncodeMap(e.response?.request.data)} ");
-        throw (e.response?.statusMessage ?? "");
-      } else {
-        // Something happened in setting up or sending the request that triggered an Error
-        //        print(e.request);
-        //        print(e.message);
-      }
-    } catch (e) {
-      // throw ('API ERROR');
-      print("API ERROR ${e}");
-      return ResponseGetListType(types: []);
-    }
-
-    return Tools.readfileListType();
-    // return ResponseGetListEtat(etat: []);
   }
 
   static Future<ResponseGetDemandesList> getDemandes() async {
@@ -379,29 +266,10 @@ class Tools {
     return false;
   }
 
-  static void writeToFileEtatsList(Map jsonMapContent) {
-    print("Writing to writeToFileEtatsList!");
-    try {
-      fileEtatsList.writeAsStringSync(json.encode(jsonMapContent));
-      print("OK");
-    } catch (e) {
-      print("exeption -- " + e.toString());
-    }
-  }
-  static void writeToFilePanneList(Map jsonMapContent) {
+  static void writeToFilePannesList(Map jsonMapContent) {
     print("Writing to writeToFilePanneList!");
     try {
-      fileEtatsList.writeAsStringSync(json.encode(jsonMapContent));
-      print("OK");
-    } catch (e) {
-      print("exeption -- " + e.toString());
-    }
-  }
-
-  static void writeToFileTypeInstallationList(Map jsonMapContent) {
-    print("Writing to writeToFileTypeInstallationList!");
-    try {
-      fileListType.writeAsStringSync(json.encode(jsonMapContent));
+      filePannesList.writeAsStringSync(json.encode(jsonMapContent));
       print("OK");
     } catch (e) {
       print("exeption -- " + e.toString());
@@ -601,129 +469,44 @@ class Tools {
     return false;
   }
 
-  static ResponseGetListEtat readfileEtatsList() {
-    ResponseGetListEtat responseListEtat;
-
-    print("Read to readfileEtatsList!");
+  static T _readFile<T>(
+      File file, T Function(Map<String, dynamic>) fromJson, T emptyResponse) {
+    print("[INFO] Starting file read: ${file.path}");
     try {
-      String fileContent = fileDemandesList.readAsStringSync();
-      print("file content ==> ${fileContent}");
+      String fileContent = file.readAsStringSync();
+      print("[DEBUG] File content: ${fileContent}");
 
-      if (!fileContent.isEmpty) {
-        Map<String, dynamic> etatsListMap =
-            json.decode(fileEtatsList.readAsStringSync());
-        print(etatsListMap);
-
-        responseListEtat = ResponseGetListEtat.fromJson(etatsListMap);
-
-        print("OK");
-
-        return responseListEtat;
+      if (fileContent.isNotEmpty) {
+        Map<String, dynamic> dataMap = json.decode(fileContent);
+        print("[DEBUG] Parsed JSON: $dataMap");
+        return fromJson(dataMap);
       } else {
-        print("empty file");
+        print("[WARNING] File is empty: ${file.path}");
       }
-    } catch (e) {
-      print("exeption -- " + e.toString());
+    } catch (e, stackTrace) {
+      print(
+          "[ERROR] Exception while reading file ${file.path}: ${e.toString()}");
+      print("[ERROR] StackTrace: $stackTrace");
     }
 
-    print("return empty list");
-    return ResponseGetListEtat(etat: []);
+    print("[INFO] Returning empty response for: ${file.path}");
+    return emptyResponse;
   }
 
   static ResponseGetListPannes readfilePannesList() {
-    ResponseGetListPannes responseListPannes;
-
-    print("Read to pa!");
-    try {
-      String fileContent = fileDemandesList.readAsStringSync();
-      print("file content ==> ${fileContent}");
-
-      if (!fileContent.isEmpty) {
-        Map<String, dynamic> etatsListMap =
-            json.decode(fileEtatsList.readAsStringSync());
-        print(etatsListMap);
-
-        responseListPannes = ResponseGetListPannes.fromJson(etatsListMap);
-
-        print("OK");
-
-        return responseListPannes;
-      } else {
-        print("empty file");
-      }
-    } catch (e) {
-      print("exeption -- " + e.toString());
-    }
-
-    print("return empty list");
-    return ResponseGetListPannes(pannes: []);
-  }
-
-  static ResponseGetListType readfileListType() {
-    ResponseGetListType responseGetListType;
-
-    print("Read to readfileListType!");
-
-    String fileContent = fileDemandesList.readAsStringSync();
-    print("file content ==> ${fileContent}");
-
-    if (!fileContent.isEmpty) {
-      Map<String, dynamic> etatsListMap =
-          json.decode(fileListType.readAsStringSync());
-      print(etatsListMap);
-
-      responseGetListType = ResponseGetListType.fromJson(etatsListMap);
-
-      print("OK");
-
-      return responseGetListType;
-    } else {
-      print("empty file");
-    }
-
-    return ResponseGetListType(types: []);
+    return _readFile<ResponseGetListPannes>(
+      filePannesList,
+      (data) => ResponseGetListPannes.fromJson(data),
+      ResponseGetListPannes(pannes: []),
+    );
   }
 
   static ResponseGetDemandesList readfileDemandesList() {
-    ResponseGetDemandesList responseGetDemandesList;
-
-    print("Read to readfileDemandesList!");
-    try {
-      String fileContent = fileDemandesList.readAsStringSync();
-      print("file content ==> ${fileContent}");
-
-      if (!fileContent.isEmpty) {
-        Map<String, dynamic> demandeListMap = json.decode(fileContent);
-        print(demandeListMap);
-
-        responseGetDemandesList =
-            ResponseGetDemandesList.fromJson(demandeListMap);
-
-        print("OK");
-
-        return responseGetDemandesList;
-      }
-    } catch (e) {
-      print("exeption -- " + e.toString());
-    }
-
-    return ResponseGetDemandesList(demandes: []);
-  }
-
-  static Future<ResponseGetListEtat> getListEtatFromLocalAndINternet() async {
-    print("****** getListEtatFromLocalAndINternet ***");
-    ResponseGetListEtat responseListEtat;
-
-    if (await Tools.tryConnection()) {
-      responseListEtat = await Tools.callWSGetEtats();
-    } else {
-      responseListEtat = Tools.readfileEtatsList();
-    }
-
-    print(
-        "****** getListEtatFromLocalAndINternet *** return  ${responseListEtat.toJson()} ");
-
-    return responseListEtat;
+    return _readFile<ResponseGetDemandesList>(
+      fileDemandesList,
+      (data) => ResponseGetDemandesList.fromJson(data),
+      ResponseGetDemandesList(demandes: []),
+    );
   }
 
   static Future<ResponseGetListPannes>
@@ -770,19 +553,6 @@ class Tools {
     }
 
     return false;
-  }
-
-  static Future<ResponseGetListType> getTypeListFromLocalAndINternet() async {
-    print("****** getTYpeListFromLocalAndINternet ***");
-    ResponseGetListType responseGetListType;
-
-    if (await Tools.tryConnection()) {
-      responseGetListType = await Tools.callWSGetlisteTypes();
-    } else {
-      responseGetListType = Tools.readfileListType();
-    }
-
-    return responseGetListType;
   }
 
   static Future<ResponseGetDemandesList>
