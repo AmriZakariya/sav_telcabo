@@ -153,63 +153,58 @@ class Tools {
     // return ResponseGetListEtat(etat: []);
   }
 
-  static Future<ResponseGetListPannes> callWSGetPannes() async {
-    print("****** callWSGetPannes ***");
+    static Future<ResponseGetListPannes> callWSGetPannes() async {
+      print("****** callWSGetPannes ******");
 
-    Response response;
-    try {
-      Dio dio = new Dio();
-      dio.interceptors.add(dioLoggerInterceptor);
+      try {
+        Dio dio = Dio();
+        dio.interceptors.add(dioLoggerInterceptor);
 
-      response = await dio.get("${Tools.baseUrl}/pannes/get_pannes");
+        final response = await dio.get("${Tools.baseUrl}/pannes/get_pannes");
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.data}');
+        print('[WS GET_PANNES] Response status: ${response.statusCode}');
+        print('[WS GET_PANNES] Response body: ${response.data}');
 
-      if (response.statusCode == 200) {
-        if (response.data == null || response.data == "") {
-          var responseApiHome = jsonDecode(response.data);
-          writeToFileEtatsList(responseApiHome);
+        if (response.statusCode == 200) {
+          if (response.data != null && response.data.isNotEmpty) {
+            try {
+              final responseApiHome = jsonDecode(response.data);
 
-          ResponseGetListPannes pannesList =
-          ResponseGetListPannes.fromJson(responseApiHome);
-          print(pannesList);
-
-          return pannesList;
-
+              final pannesList = ResponseGetListPannes.fromJson(responseApiHome);
+              print(pannesList);
+              return pannesList;
+            } catch (e) {
+              print("[WS GET_PANNES] Error decoding response: $e");
+              throw Exception("Failed to parse response");
+            }
+          } else {
+            print("[WS GET_PANNES] Empty or null response data");
+            throw Exception("Empty response");
+          }
+        } else {
+          print("[WS GET_PANNES] Non-200 response: ${response.statusCode}");
+          throw Exception('Error fetching pannes');
         }
-      } else {
-        throw Exception('error fetching posts');
+      } on DioError catch (e) {
+        print("************** DioError **************");
+        if (e.response != null) {
+          print("[WS GET_PANNES] Server error: ${e.response?.statusMessage}");
+          throw Exception(e.response?.statusMessage ?? "Unknown server error");
+        } else {
+          print("[WS GET_PANNES] Request setup error: ${e.message}");
+          throw Exception("Request error: ${e.message}");
+        }
+      } catch (e) {
+        print("[WS GET_PANNES] Unexpected error: $e");
+        return ResponseGetListPannes(pannes: []); // Returning empty list in case of error
       }
-    } on DioError catch (e) {
-      print("**************DioError***********");
-      print(e);
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx and is also not 304.
-      if (e.response != null) {
-        print("get pannes error");
-        //        print(e.response.data);
-        //        print(e.response.headers);
-        //        print(e.response.);
-        //           print("**->REQUEST ${e.response?.re.uri}#${Transformer.urlEncodeMap(e.response?.request.data)} ");
-        throw (e.response?.statusMessage ?? "");
-      } else {
-        // Something happened in setting up or sending the request that triggered an Error
-        //        print(e.request);
-        //        print(e.message);
-      }
-    } catch (e) {
-      print('errror panned: ${e}');
-      print("API ERROR ${e}");
-      return ResponseGetListPannes(pannes: []);
-      // throw ('API ERROR');
+
+      // Fallback to local cache if all else fails
+      return Tools.readfilePannesList();
     }
 
-    return Tools.readfilePannesList();
-    // return ResponseGetListEtat(etat: []);
-  }
 
-  static Future<ResponseGetListType> callWSGetlisteTypes() async {
+    static Future<ResponseGetListType> callWSGetlisteTypes() async {
     print("****** callWSGetlisteTypes ***");
 
     Response response;
@@ -386,6 +381,15 @@ class Tools {
 
   static void writeToFileEtatsList(Map jsonMapContent) {
     print("Writing to writeToFileEtatsList!");
+    try {
+      fileEtatsList.writeAsStringSync(json.encode(jsonMapContent));
+      print("OK");
+    } catch (e) {
+      print("exeption -- " + e.toString());
+    }
+  }
+  static void writeToFilePanneList(Map jsonMapContent) {
+    print("Writing to writeToFilePanneList!");
     try {
       fileEtatsList.writeAsStringSync(json.encode(jsonMapContent));
       print("OK");
@@ -724,7 +728,7 @@ class Tools {
 
   static Future<ResponseGetListPannes>
       getPannesListFromLocalAndInternet() async {
-    print("****** getL ***");
+    print("****** get getPannesListFromLocalAndInternet ***");
     ResponseGetListPannes responseGetListPannes;
 
     if (await Tools.tryConnection()) {

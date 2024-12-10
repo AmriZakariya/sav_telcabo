@@ -1057,17 +1057,6 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _firebaseMessagingBackgroundHandler(
-      RemoteMessage message) async {
-    print("Handling a background message: ${message.messageId}");
-    // Tools.getDemandes();
-    final items = await Tools.getDemandes();
-
-    setState(() {
-      Tools.demandesListSaved = items;
-      demandesList = items;
-    });
-  }
 
   late final FirebaseMessaging _messaging;
   PushNotification? _notificationInfo;
@@ -1665,4 +1654,12 @@ class SearchFieldFormWidget extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Ensure Firebase is initialized
+  await Firebase.initializeApp();
+
+  // Handle background message here
+  print('Handling background message: ${message.messageId}');
 }

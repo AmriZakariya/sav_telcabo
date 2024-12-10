@@ -1,1 +1,46 @@
-{"web":{"client_id":"451010342933-qcf46id2trl8f66mj3rrpv4t6kup1n3j.apps.googleusercontent.com","project_id":"tablino","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["http://localhost/oauth2callback"]}}
+{
+  "project_info": {
+    "project_number": "131826341458",
+    "project_id": "castlit-7cade",
+    "storage_bucket": "castlit-7cade.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:131826341458:android:170e308aba408c8ae5f18b",
+        "android_client_info": {
+          "package_name": "com.castlit.telcabo.mobileapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "131826341458-gsskrfr9badqt2bqbipuckmrtf5kvqc0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6JjtQYufLLrCTgWZKETnrusiloRVWwjo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "131826341458-gsskrfr9badqt2bqbipuckmrtf5kvqc0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "131826341458-9p6bjqk4i9risu8855ue38bq60ld1st0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.castlit.telcabo.mobileappios"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

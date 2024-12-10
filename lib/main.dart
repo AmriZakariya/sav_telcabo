@@ -16,14 +16,6 @@ import 'package:telcabo/Tools.dart';
 import 'firebase_options.dart';
 
 
-
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("Handling a background message: ${message.messageId}");
-  Tools.getDemandes();
-}
-
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -101,6 +93,7 @@ class _MyAppState extends State<MyApp> {
 
   void getDeviceToken() async {
     await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     final FirebaseMessaging _messaging = FirebaseMessaging.instance;
     String deviceToken = "" ;
     await _messaging.getToken().then((value) {
@@ -223,4 +216,12 @@ class MyHttpOverrides extends HttpOverrides{
     return super.createHttpClient(context)
       ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
   }
+}
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Ensure Firebase is initialized
+  await Firebase.initializeApp();
+
+  // Handle background message here
+  print('Handling background message: ${message.messageId}');
 }
