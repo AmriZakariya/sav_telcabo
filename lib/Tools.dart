@@ -6,841 +6,542 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_logger/dio_logger.dart';
 import 'package:flutter/material.dart';
-
-// import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:image/image.dart' as imagePLugin;
+import 'package:image/image.dart' as imagePlugin;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:telcabo/custome/ConnectivityCheckBlocBuilder.dart';
 import 'package:telcabo/models/response_get_demandes.dart';
-
 import 'models/response_get_liste_pannes.dart';
 
 class Tools {
-  // static String baseUrl = "https://telcabo.castlit.com" ;
-  // static String baseUrl = "https://crmtelcabo.com" ;
-  // static String baseUrl = "https://sav.castlit.com";
+  // Base URL for the APIs
   static String baseUrl = "https://sav.crmtelcabo.com";
 
+  // Configurations and constants
   static bool localWatermark = false;
-
   static Demande? selectedDemande;
   static int currentStep = 1;
-
   static ResponseGetDemandesList? demandesListSaved;
-
   static Map? searchFilter = {};
   static String currentDemandesEtatFilter = "";
-
   static String deviceToken = "";
-
   static String userId = "";
-
   static String userName = "";
-
   static String userEmail = "";
 
+  // Demand states
   static String ETAT_EN_COURS = "1";
   static String ETAT_PLANIFIE = "2";
   static String ETAT_RESOLU = "3";
   static String ETAT_ANNULE = "4";
 
+  // Language code
   static String languageCode = "ar";
 
-  static final Color colorPrimary = Color(0xff3f4d67);
-  static final Color colorSecondary = Color(0xfff99e25);
-  static final Color colorBackground = Color(0xfff3f1ef);
+  // Colors
+  static final Color colorPrimary = const Color(0xff3f4d67);
+  static final Color colorSecondary = const Color(0xfff99e25);
+  static final Color colorBackground = const Color(0xfff3f1ef);
 
+  // Local files
+  static File filePannesList = File("");
+  static File fileDemandesList = File("");
+  static File fileTraitementList = File("");
+
+  // Connectivity result
+  static ConnectivityResult? connectivityResult;
+
+  /// Returns the readable language name from languageCode.
   static String getLanguageName() {
     switch (languageCode) {
       case "ar":
         return "العربية";
       case "fr":
         return "Français";
+      default:
+        return languageCode;
     }
-
-    return languageCode;
   }
 
-  static File filePannesList = File("");
-  static File fileDemandesList = File("");
-  static File fileTraitementList = File("");
-
+  /// Initialize local files used to store offline data.
   static void initFiles() {
-    print("initFiles!");
+    getApplicationDocumentsDirectory().then((Directory directory) {
+      filePannesList = File("${directory.path}/filePannesList.json");
+      fileDemandesList = File("${directory.path}/fileDemandesList.json");
+      fileTraitementList = File("${directory.path}/fileTraitementList.json");
+
+      if (!filePannesList.existsSync()) filePannesList.createSync();
+      if (!fileDemandesList.existsSync()) fileDemandesList.createSync();
+      if (!fileTraitementList.existsSync()) fileTraitementList.createSync();
+    }).catchError((e) {
+      print("initFiles exception: $e");
+    });
+  }
+
+  /// Calls the web service to get pannes list.
+  /// Falls back to local file if API fails.
+  static Future<ResponseGetListPannes> callWSGetPannes() async {
+    print("[INFO] callWSGetPannes started");
     try {
-      getApplicationDocumentsDirectory().then((Directory directory) {
-        filePannesList = new File(directory.path + "/filePannesList.json");
-        fileDemandesList = new File(directory.path + "/fileDemandesList.json");
-        fileTraitementList = new File(directory.path + "/fileTraitementList.json");
+      Dio dio = Dio();
+      dio.interceptors.add(dioLoggerInterceptor);
+      final response = await dio.get("$baseUrl/pannes/get_pannes");
 
-        if (!filePannesList.existsSync()) {
-          filePannesList.createSync();
-        }
-
-        if (!fileDemandesList.existsSync()) {
-          fileDemandesList.createSync();
-        }
-
-        if (!fileTraitementList.existsSync()) {
-          fileTraitementList.createSync();
-        }
-      });
+      print("[DEBUG] GET_PANNES status: ${response.statusCode}");
+      if (response.statusCode == 200 && response.data != null && response.data.isNotEmpty) {
+        final responseApiHome = jsonDecode(response.data);
+        writeToFilePannesList(responseApiHome);
+        return ResponseGetListPannes.fromJson(responseApiHome);
+      } else {
+        print("[ERROR] Empty or invalid response from GET_PANNES");
+        throw Exception(
+            "Empty response");
+      }
+    } on DioError catch (e) {
+      print("[ERROR] DioError in callWSGetPannes: ${e.message}");
+      return readfilePannesList();
     } catch (e) {
-      print("exeption -- " + e.toString());
+      print("[ERROR] Exception in callWSGetPannes: $e");
+      return readfilePannesList();
     }
   }
 
-  static Future<ResponseGetListPannes> callWSGetPannes() async {
-    print("****** callWSGetPannes ******");
+  /// Calls the web service to get demandes.
+  /// Updates local file on success, otherwise returns empty list or fallback.
+  static Future<ResponseGetDemandesList> getDemandes() async {
+    print("[INFO] getDemandes started");
+    FormData formData = FormData.fromMap({"user_id": userId});
+    print("[DEBUG] formData for getDemandes: ${formData.fields}");
 
     try {
       Dio dio = Dio();
       dio.interceptors.add(dioLoggerInterceptor);
+      Response apiRespon = await dio.post(
+        "$baseUrl/demandes/get_demandes",
+        data: formData,
+        options: Options(
+          method: "POST",
+          headers: {
+            'Content-Type': 'multipart/form-data;charset=UTF-8',
+            'Accept': 'application/json',
+          },
+        ),
+      );
 
-      final response = await dio.get("${Tools.baseUrl}/pannes/get_pannes");
-
-      print('[WS GET_PANNES] Response status: ${response.statusCode}');
-      print('[WS GET_PANNES] Response body: ${response.data}');
-
-      if (response.statusCode == 200) {
-        if (response.data != null && response.data.isNotEmpty) {
-          try {
-            final responseApiHome = jsonDecode(response.data);
-
-            final pannesList = ResponseGetListPannes.fromJson(responseApiHome);
-            print(pannesList);
-            return pannesList;
-          } catch (e) {
-            print("[WS GET_PANNES] Error decoding response: $e");
-            throw Exception("Failed to parse response");
-          }
-        } else {
-          print("[WS GET_PANNES] Empty or null response data");
-          throw Exception("Empty response");
-        }
-      } else {
-        print("[WS GET_PANNES] Non-200 response: ${response.statusCode}");
-        throw Exception('Error fetching pannes');
-      }
-    } on DioError catch (e) {
-      print("************** DioError **************");
-      if (e.response != null) {
-        print("[WS GET_PANNES] Server error: ${e.response?.statusMessage}");
-        throw Exception(e.response?.statusMessage ?? "Unknown server error");
-      } else {
-        print("[WS GET_PANNES] Request setup error: ${e.message}");
-        throw Exception("Request error: ${e.message}");
-      }
-    } catch (e) {
-      print("[WS GET_PANNES] Unexpected error: $e");
-      // Fallback to local cache if all else fails
-      return Tools.readfilePannesList();
-    }
-  }
-
-  static Future<ResponseGetDemandesList> getDemandes() async {
-    FormData formData = FormData.fromMap({"user_id": userId});
-
-    print(formData.fields.toString());
-
-    Response apiRespon;
-    try {
-      print("************** getDemandes ***********");
-      Dio dio = new Dio();
-      dio.interceptors.add(dioLoggerInterceptor);
-
-      apiRespon = await dio.post("${Tools.baseUrl}/demandes/get_demandes",
-          data: formData,
-          options: Options(
-            // followRedirects: false,
-            // validateStatus: (status) { return status < 500; },
-            method: "POST",
-            headers: {
-              'Content-Type': 'multipart/form-data;charset=UTF-8',
-              'Charset': 'utf-8',
-              'Accept': 'application/json',
-            },
-          ));
-
-      print('Response status: ${apiRespon.statusCode}');
-      print('Response body: ${apiRespon.data}');
-
+      print("[DEBUG] getDemandes status: ${apiRespon.statusCode}");
       if (apiRespon.statusCode == 200) {
         var responseApiHome = jsonDecode(apiRespon.data);
         writeToFileDemandeList(responseApiHome);
-
-        ResponseGetDemandesList demandesList =
-            ResponseGetDemandesList.fromJson(responseApiHome);
-        print(demandesList);
-
-        return demandesList;
+        return ResponseGetDemandesList.fromJson(responseApiHome);
       } else {
-        throw Exception('error fetching posts');
+        print("[ERROR] Non-200 response in getDemandes");
+        return ResponseGetDemandesList(demandes: []);
       }
     } on DioError catch (e) {
-      print("**************DioError***********");
-      print(e);
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx and is also not 304.
-      if (e.response != null) {
-        //        print(e.response.data);
-        //        print(e.response.headers);
-        //        print(e.response.);
-        //           print("**->REQUEST ${e.response?.re.uri}#${Transformer.urlEncodeMap(e.response?.request.data)} ");
-        // throw (e.response?.statusMessage ?? "");
-      } else {
-        // Something happened in setting up or sending the request that triggered an Error
-        //        print(e.request);
-        //        print(e.message);
-      }
+      print("[ERROR] DioError in getDemandes: ${e.message}");
+      return ResponseGetDemandesList(demandes: []);
     } catch (e) {
-      print("API ERROR ${e}");
+      print("[ERROR] Exception in getDemandes: $e");
       return ResponseGetDemandesList(demandes: []);
     }
-
-    // return ResponseGetDemandesList(demandes: []) ;
-
-    return readfileDemandesList();
   }
 
+  /// Calls the web service to send mail for selected demande.
   static Future<bool> callWSSendMail() async {
-    FormData formData =
-        FormData.fromMap({"demande_id": Tools.selectedDemande?.id});
-
-    Response apiRespon;
+    print("[INFO] callWSSendMail started");
+    FormData formData = FormData.fromMap({"demande_id": selectedDemande?.id});
     try {
-      print("************** callWSSendMail ***********");
-      Dio dio = new Dio();
+      Dio dio = Dio();
+      Response apiRespon = await dio.post(
+        "$baseUrl/traitements/send_mail",
+        data: formData,
+        options: Options(
+          method: "POST",
+          headers: {
+            'Content-Type': 'multipart/form-data;charset=UTF-8',
+            'Accept': 'application/json',
+          },
+        ),
+      );
 
-      apiRespon = await dio.post("${Tools.baseUrl}/traitements/send_mail",
-          data: formData,
-          options: Options(
-            // followRedirects: false,
-            // validateStatus: (status) { return status < 500; },
-            method: "POST",
-            headers: {
-              'Content-Type': 'multipart/form-data;charset=UTF-8',
-              'Charset': 'utf-8',
-              'Accept': 'application/json',
-            },
-          ));
-
-      print('Response status: ${apiRespon.statusCode}');
-      print('Response body: ${apiRespon.data}');
-
-      if (apiRespon.statusCode == 200) {
-        if (apiRespon.data == "000") {
-          return true;
-        }
-      } else {
-        throw Exception('error fetching posts');
+      print("[DEBUG] callWSSendMail status: ${apiRespon.statusCode}, body: ${apiRespon.data}");
+      if (apiRespon.statusCode == 200 && apiRespon.data == "000") {
+        return true;
       }
+      return false;
     } on DioError catch (e) {
-      print("**************DioError***********");
-      print(e);
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx and is also not 304.
-      if (e.response != null) {
-        //        print(e.response.data);
-        //        print(e.response.headers);
-        //        print(e.response.);
-        //           print("**->REQUEST ${e.response?.re.uri}#${Transformer.urlEncodeMap(e.response?.request.data)} ");
-        throw (e.response?.statusMessage ?? "");
-      } else {
-        // Something happened in setting up or sending the request that triggered an Error
-        //        print(e.request);
-        //        print(e.message);
-      }
+      print("[ERROR] DioError in callWSSendMail: ${e.message}");
+      return false;
     } catch (e) {
-      // throw ('API ERROR');
-      print("API ERROR ${e}");
+      print("[ERROR] Exception in callWSSendMail: $e");
       return false;
     }
-
-    // return ResponseGetDemandesList(demandes: []) ;
-
-    return false;
   }
 
+  /// Writes pannes list to local file.
   static void writeToFilePannesList(Map jsonMapContent) {
-    print("Writing to writeToFilePanneList!");
     try {
       filePannesList.writeAsStringSync(json.encode(jsonMapContent));
-      print("OK");
     } catch (e) {
-      print("exeption -- " + e.toString());
+      print("[ERROR] writeToFilePannesList exception: $e");
     }
   }
 
+  /// Writes demandes list to local file.
   static void writeToFileDemandeList(Map jsonMapContent) {
-    print("Writing to writeToFileDemandeList!");
     try {
       fileDemandesList.writeAsStringSync(json.encode(jsonMapContent));
-      print("OK");
     } catch (e) {
-      print("exeption -- " + e.toString());
+      print("[ERROR] writeToFileDemandeList exception: $e");
     }
   }
 
+  /// Reads traitement list from local file and tries to sync them via API.
   static Future<void> readFileTraitementList() async {
-    print("readFileTraitementList!");
-
-    // fileTraitementList.writeAsStringSync("");
-    // return ;
+    print("[INFO] readFileTraitementList started");
     try {
       String fileContent = fileTraitementList.readAsStringSync();
-      print("file content ==> ${fileContent}");
-
-      if (!fileContent.isEmpty) {
+      if (fileContent.isNotEmpty) {
         Map<String, dynamic> demandeListMap = json.decode(fileContent);
-
-        print(demandeListMap);
-
         List traitementList = demandeListMap.values.elementAt(0);
-        print("traitementList length==> ${traitementList.length}");
-        print("traitementList ==> ${traitementList}");
-
         List traitementListResult = [];
 
-        for (int i = 0; i < traitementList.length; i++) {
-          print("element ==> ${traitementList[i]}");
-
-          var isUpdated =
-              await callWsAddMobileFromLocale(jsonDecode(traitementList[i]));
-          if (isUpdated == true) {
-            print("readFileTraitementList isUpdated success");
-          } else {
-            print("readFileTraitementList added");
-            traitementListResult.add(traitementList[i]);
+        for (var element in traitementList) {
+          var isUpdated = await callWsAddMobileFromLocale(jsonDecode(element));
+          if (!isUpdated) {
+            traitementListResult.add(element);
           }
         }
-
-        print(
-            "readFileTraitementList isUpdated traitementListResultlength ==> ${traitementListResult.length}");
-
         Map rsultMap = {"traitementList": traitementListResult};
         fileTraitementList.writeAsStringSync(json.encode(rsultMap));
-      } else {
-        print("empty file");
       }
     } catch (e) {
-      print(" readFileTraitementList exeption -- " + e.toString());
+      print("[ERROR] readFileTraitementList exception: $e");
     }
   }
 
-  static Future<bool> callWsAddMobileFromLocale(
-      Map<String, dynamic> jsonMapContent) async {
-    print("****** callWsAddMobileFromLocale ***");
-
-    String currentAddress = "";
-
+  /// Uploads and processes offline traitement data.
+  /// Adds watermark if enabled and attempts to send data to server.
+  static Future<bool> callWsAddMobileFromLocale(Map<String, dynamic> jsonMapContent) async {
+    print("[INFO] callWsAddMobileFromLocale started");
+    String currentAddress;
     try {
-      currentAddress = await Tools.getAddressFromLatLng();
+      currentAddress = await getAddressFromLatLng();
     } catch (e) {
+      print("[ERROR] getAddressFromLatLng failed: $e");
       return false;
     }
 
     String currentDate = jsonMapContent["date"];
     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
 
-    for (var mapKey in jsonMapContent.keys) {
-      if (mapKey == "p_pbi_avant" ||
-          mapKey == "p_pbi_apres" ||
-          mapKey == "p_pbo_avant" ||
-          mapKey == "p_pbo_apres" ||
-          mapKey == "p_equipement_installe" ||
-          mapKey == "p_test_signal" ||
-          mapKey == "p_etiquetage_indoor" ||
-          mapKey == "p_etiquetage_outdoor" ||
-          mapKey == "p_passage_cable" ||
-          mapKey == "p_fiche_instalation" ||
-          mapKey == "p_dos_routeur" ||
-          mapKey == "p_speed_test" ||
-          mapKey == "photo_blocage1" ||
-          mapKey == "photo_blocage2") {
-        try {
-          if (jsonMapContent[mapKey] != null &&
-              jsonMapContent[mapKey] != "null" &&
-              jsonMapContent[mapKey] != "") {
-            final splitted = jsonMapContent[mapKey].split(";;");
+    // Fields that may contain image paths
+    List<String> imageFields = [
+      "p_pbi_avant",
+      "p_pbi_apres",
+      "p_pbo_avant",
+      "p_pbo_apres",
+      "p_equipement_installe",
+      "p_test_signal",
+      "p_etiquetage_indoor",
+      "p_etiquetage_outdoor",
+      "p_passage_cable",
+      "p_fiche_instalation",
+      "p_dos_routeur",
+      "p_speed_test",
+      "photo_blocage1",
+      "photo_blocage2"
+    ];
 
-            if (Tools.localWatermark == true) {
-              final File fileResult = File(splitted[0]);
-
-              final image =
-                  imagePLugin.decodeImage(fileResult.readAsBytesSync())!;
-              // imagePLugin.drawString(
-              //     image, imagePLugin.arial_24, 0, 0, currentDate);
-              // imagePLugin.drawString(
-              //     image, imagePLugin.arial_24, 0, 32, currentAddress);
-
-              await getApplicationDocumentsDirectory()
-                  .then((Directory directory) {
-                File fileResultWithWatermark =
-                    File(directory.path + "/" + fileName + '.png');
-                fileResultWithWatermark
-                    .writeAsBytesSync(imagePLugin.encodePng(image));
-
-                XFile xfileResult = XFile(fileResultWithWatermark.path);
-
-                jsonMapContent[mapKey] = MultipartFile.fromFileSync(
-                    xfileResult.path,
-                    filename: xfileResult.name);
-
-                print("watermark success");
-              });
-            } else {
-              jsonMapContent[mapKey] = MultipartFile.fromFileSync(splitted[0],
-                  filename: splitted[1]);
+    for (var mapKey in imageFields) {
+      try {
+        if (jsonMapContent[mapKey] != null &&
+            jsonMapContent[mapKey] != "null" &&
+            jsonMapContent[mapKey] != "") {
+          final splitted = jsonMapContent[mapKey].split(";;");
+          if (localWatermark) {
+            final fileResult = File(splitted[0]);
+            final image = imagePlugin.decodeImage(fileResult.readAsBytesSync());
+            if (image != null) {
+              // Add watermark or custom text if needed
+              Directory dir = await getApplicationDocumentsDirectory();
+              File fileResultWithWatermark = File("${dir.path}/$fileName.png");
+              fileResultWithWatermark.writeAsBytesSync(imagePlugin.encodePng(image));
+              XFile xfileResult = XFile(fileResultWithWatermark.path);
+              jsonMapContent[mapKey] = MultipartFile.fromFileSync(
+                xfileResult.path,
+                filename: xfileResult.name,
+              );
             }
+          } else {
+            jsonMapContent[mapKey] = MultipartFile.fromFileSync(
+              splitted[0],
+              filename: splitted[1],
+            );
           }
-        } catch (e) {
-          print("+++ exception ++++");
-          print(e);
-          jsonMapContent[mapKey] = null;
         }
+      } catch (e) {
+        print("[ERROR] Processing image field $mapKey failed: $e");
+        jsonMapContent[mapKey] = null;
       }
     }
 
     jsonMapContent.addAll({"isOffline": true});
-
-    print("callWsAddMobileFromLocale jsonMapContent ==> ${jsonMapContent}");
-
     FormData formData = FormData.fromMap(jsonMapContent);
-    print(formData);
 
-    Response apiRespon;
     try {
-      print("**************doPOST***********");
-      Dio dio = new Dio();
+      Dio dio = Dio();
       dio.interceptors.add(dioLoggerInterceptor);
+      Response apiRespon = await dio.post(
+        "$baseUrl/traitements/add_mobile",
+        data: formData,
+        options: Options(
+          method: "POST",
+          headers: {
+            'Content-Type': 'multipart/form-data;charset=UTF-8',
+          },
+        ),
+      );
 
-      apiRespon = await dio.post("${Tools.baseUrl}/traitements/add_mobile",
-          data: formData,
-          options: Options(
-            method: "POST",
-            headers: {
-              'Content-Type': 'multipart/form-data;charset=UTF-8',
-              'Charset': 'utf-8'
-            },
-          ));
-
-      print("Image Upload ${apiRespon}");
-
-      print(apiRespon);
-
+      print("[DEBUG] callWsAddMobileFromLocale response: ${apiRespon.data}");
       if (apiRespon.data == "000") {
         return true;
       }
-
-      // if (apiRespon.statusCode == 201) {
-      //   apiRespon.statusCode == 201;
-      //
-      //   return true ;
-      // } else {
-      //   print('errr');
-      // }
     } on DioError catch (e) {
-      print("**************DioError***********");
-      print(e);
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx and is also not 304.
-      if (e.response != null) {
-        //        print(e.response.data);
-        //        print(e.response.headers);
-        //        print(e.response.);
-        //           print("**->REQUEST ${e.response?.re.uri}#${Transformer.urlEncodeMap(e.response?.request.data)} ");
-        // throw (e.response?.statusMessage ?? "");
-      } else {
-        // Something happened in setting up or sending the request that triggered an Error
-        //        print(e.request);
-        //        print(e.message);
-      }
+      print("[ERROR] DioError in callWsAddMobileFromLocale: ${e.message}");
+      return false;
     } catch (e) {
-      // throw ('API ERROR');
-      print("API ERROR ${e}");
+      print("[ERROR] Exception in callWsAddMobileFromLocale: $e");
       return false;
     }
-
     return false;
   }
 
+  /// Generic file reader with JSON parsing.
   static T _readFile<T>(
-      File file, T Function(Map<String, dynamic>) fromJson, T emptyResponse) {
-    print("[INFO] Starting file read: ${file.path}");
+      File file,
+      T Function(Map<String, dynamic>) fromJson,
+      T emptyResponse,
+      ) {
+    print("[INFO] Reading file: ${file.path}");
     try {
       String fileContent = file.readAsStringSync();
-      print("[DEBUG] File content: ${fileContent}");
-
       if (fileContent.isNotEmpty) {
         Map<String, dynamic> dataMap = json.decode(fileContent);
-        print("[DEBUG] Parsed JSON: $dataMap");
         return fromJson(dataMap);
       } else {
         print("[WARNING] File is empty: ${file.path}");
       }
     } catch (e, stackTrace) {
-      print(
-          "[ERROR] Exception while reading file ${file.path}: ${e.toString()}");
+      print("[ERROR] Exception while reading ${file.path}: $e");
       print("[ERROR] StackTrace: $stackTrace");
     }
-
-    print("[INFO] Returning empty response for: ${file.path}");
     return emptyResponse;
   }
 
+  /// Reads pannes list from local file.
   static ResponseGetListPannes readfilePannesList() {
     return _readFile<ResponseGetListPannes>(
       filePannesList,
-      (data) => ResponseGetListPannes.fromJson(data),
+          (data) => ResponseGetListPannes.fromJson(data),
       ResponseGetListPannes(pannes: []),
     );
   }
 
+  /// Reads demandes list from local file.
   static ResponseGetDemandesList readfileDemandesList() {
     return _readFile<ResponseGetDemandesList>(
       fileDemandesList,
-      (data) => ResponseGetDemandesList.fromJson(data),
+          (data) => ResponseGetDemandesList.fromJson(data),
       ResponseGetDemandesList(demandes: []),
     );
   }
 
-  static Future<ResponseGetListPannes>
-      getPannesListFromLocalAndInternet() async {
-    print("****** get getPannesListFromLocalAndInternet ***");
-    ResponseGetListPannes responseGetListPannes;
-
-    if (await Tools.tryConnection()) {
-      responseGetListPannes = await Tools.callWSGetPannes();
+  /// Tries to get pannes list from internet, if no connection uses local file.
+  static Future<ResponseGetListPannes> getPannesListFromLocalAndInternet() async {
+    print("[INFO] getPannesListFromLocalAndInternet started");
+    if (await tryConnection()) {
+      return callWSGetPannes();
     } else {
-      responseGetListPannes = Tools.readfilePannesList();
+      return readfilePannesList();
     }
-
-    print(
-        "****** getListEtatFromLocalAndINternet *** return  ${responseGetListPannes.toJson()} ");
-
-    return responseGetListPannes;
   }
 
+  /// Checks internet connectivity by pinging Google.
   static Future<bool> tryConnection() async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    print("tryConnection ==> connectivityResult : ${connectivityResult}");
-
+    print("[INFO] tryConnection started");
+    var connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult == ConnectivityResult.none) {
+      print("[DEBUG] No internet connectivity");
       return false;
     }
-
     try {
       final response = await InternetAddress.lookup('www.google.com');
-
-      print("tryConnection ==> response : ${response}");
-      if (response.isEmpty) {
-        return false;
-      }
-
-      if (response.isNotEmpty && response[0].rawAddress.isNotEmpty) {
-        return true;
-      } else {
-        return false;
-      }
+      return response.isNotEmpty && response[0].rawAddress.isNotEmpty;
     } on SocketException catch (e) {
-      print("tryConnection ==> SocketException : ${e}");
+      print("[ERROR] SocketException in tryConnection: $e");
       return false;
     }
-
-    return false;
   }
 
-  static Future<ResponseGetDemandesList>
-      getListDemandeFromLocalAndINternet() async {
-    ResponseGetDemandesList responseGetDemandesList;
-
-    if (await Tools.tryConnection()) {
-      print("read from ws");
-      responseGetDemandesList = await Tools.getDemandes();
+  /// Tries to get demandes list from internet, if no connection uses local file.
+  static Future<ResponseGetDemandesList> getListDemandeFromLocalAndINternet() async {
+    print("[INFO] getListDemandeFromLocalAndINternet started");
+    if (await tryConnection()) {
+      return getDemandes();
     } else {
-      responseGetDemandesList = Tools.readfileDemandesList();
+      return readfileDemandesList();
     }
-
-    return responseGetDemandesList;
   }
 
+  /// Calls login API and stores user info if successful.
   static Future<bool> callWsLogin(Map<String, dynamic> formDateValues) async {
-    print("Tools.deviceToken = " + Tools.deviceToken);
-
-    formDateValues.addAll({"registration_id": Tools.deviceToken});
-
-    print(formDateValues);
-
+    print("[INFO] callWsLogin started");
+    formDateValues["registration_id"] = deviceToken;
     FormData formData = FormData.fromMap(formDateValues);
 
-    Response apiRespon;
     try {
-      print("************** callWsLogin ***********");
-      Dio dio = new Dio();
-
-      apiRespon = await dio.post("${Tools.baseUrl}/users/login_android",
-          data: formData,
-          options: Options(
-            // followRedirects: false,
-            // validateStatus: (status) { return status < 500; },
-            method: "POST",
-            headers: {
-              'Content-Type': 'multipart/form-data;charset=UTF-8',
-              'Charset': 'utf-8',
-              'Accept': 'application/json',
-            },
-          ));
-
-      print(apiRespon);
+      Dio dio = Dio();
+      Response apiRespon = await dio.post(
+        "$baseUrl/users/login_android",
+        data: formData,
+        options: Options(
+          method: "POST",
+          headers: {
+            'Content-Type': 'multipart/form-data;charset=UTF-8',
+            'Accept': 'application/json',
+          },
+        ),
+      );
 
       Map result = json.decode(apiRespon.data) as Map;
+      String uid = result["id"];
+      String uname = result["name"];
 
-      String userId = result["id"];
-      String userName = result["name"];
-
-      if (userId.isNotEmpty && userId != "0") {
+      if (uid.isNotEmpty && uid != "0") {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isOnline', true);
-        await prefs.setString('userId', userId);
-        await prefs.setString('userName', userName);
+        await prefs.setString('userId', uid);
+        await prefs.setString('userName', uname);
         await prefs.setString('userEmail', formDateValues["username"]);
-
-        Tools.userId = userId;
-        Tools.userName = userName;
-        Tools.userEmail = formDateValues["username"];
-
+        userId = uid;
+        userName = uname;
+        userEmail = formDateValues["username"];
         return true;
       }
-      // print(json.decode(apiRespon).toString());
     } on DioError catch (e) {
-      print("**************DioError***********");
-      print(e);
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx and is also not 304.
-      if (e.response != null) {
-        //        print(e.response.data);
-        //        print(e.response.headers);
-        //        print(e.response.);
-        //           print("**->REQUEST ${e.response?.re.uri}#${Transformer.urlEncodeMap(e.response?.request.data)} ");
-        throw (e.response?.statusMessage ?? "");
-      } else {
-        // Something happened in setting up or sending the request that triggered an Error
-        //        print(e.request);
-        print(e.message);
-        throw (e);
-      }
+      print("[ERROR] DioError in callWsLogin: ${e.message}");
+      return false;
     } catch (e) {
-      // throw ('API ERROR');
-      print("API ERROR ${e}");
+      print("[ERROR] Exception in callWsLogin: $e");
       return false;
     }
-
     return false;
   }
 
+  /// Determines the device's current position, handling all permission checks.
   static Future<Position> determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Test if location services are enabled.
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    print("[INFO] determinePosition started");
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Location services are not enabled don't continue
-      // accessing the position and request users of the
-      // App to enable the location services.
-      // return Future.error('Location services are disabled.');
       return Future.error('Les services de localisation sont désactivés.');
     }
 
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Permissions are denied, next time you could try
-        // requesting permissions again (this is also where
-        // Android's shouldShowRequestPermissionRationale
-        // returned true. According to Android guidelines
-        // your App should show an explanatory UI now.
-        // return Future.error('Location permissions are denied');
         return Future.error('Les autorisations de localisation sont refusées');
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      // Permissions are denied forever, handle appropriately.
-      // return Future.error(
-      //     'Location permissions are permanently denied, we cannot request permissions.');
-      return Future.error(
-          'Les autorisations de localisation sont définitivement refusées, nous ne pouvons pas demander d\'autorisations.');
+      return Future.error('Les autorisations de localisation sont définitivement refusées.');
     }
 
-    // When we reach here, permissions are granted and we can
-    // continue accessing the position of the device.
     return await Geolocator.getCurrentPosition();
   }
 
+  /// Refreshes the selected demande by calling the API.
   static Future<bool> refreshSelectedDemande() async {
-    print("****** callWSRefreshSelectedDEmande ***");
-
-    FormData formData =
-        FormData.fromMap({"demande_id": Tools.selectedDemande?.id ?? ""});
-
-    print(formData);
-
-    Response apiRespon;
+    print("[INFO] refreshSelectedDemande started");
+    FormData formData = FormData.fromMap({"demande_id": selectedDemande?.id ?? ""});
     try {
-      print("************** getDemandes ***********");
-      Dio dio = new Dio();
+      Dio dio = Dio();
       dio.interceptors.add(dioLoggerInterceptor);
-
-      apiRespon = await dio.post("${Tools.baseUrl}/demandes/get_demandes_byid",
-          data: formData,
-          options: Options(
-            // followRedirects: false,
-            // validateStatus: (status) { return status < 500; },
-            method: "POST",
-            headers: {
-              'Content-Type': 'multipart/form-data;charset=UTF-8',
-              'Charset': 'utf-8',
-              'Accept': 'application/json',
-            },
-          ));
-
-      print('Response status: ${apiRespon.statusCode}');
-      print('Response body: ${apiRespon.data}');
+      Response apiRespon = await dio.post(
+        "$baseUrl/demandes/get_demandes_byid",
+        data: formData,
+        options: Options(
+          method: "POST",
+          headers: {
+            'Content-Type': 'multipart/form-data;charset=UTF-8',
+            'Accept': 'application/json',
+          },
+        ),
+      );
 
       if (apiRespon.statusCode == 200) {
         var responseApiHome = jsonDecode(apiRespon.data);
-
         ResponseGetDemandesList demandesList =
-            ResponseGetDemandesList.fromJson(responseApiHome);
-        print(demandesList);
+        ResponseGetDemandesList.fromJson(responseApiHome);
+        selectedDemande = demandesList.demandes?.first;
 
-        Tools.selectedDemande = demandesList.demandes?.first;
+        int? selectedIndex = demandesListSaved?.demandes
+            ?.indexWhere((element) => element.id == selectedDemande?.id);
 
-        int? selectedIndex = Tools.demandesListSaved?.demandes
-            ?.indexWhere((element) => element.id == Tools.selectedDemande?.id);
-
-        if (selectedIndex != null && Tools.selectedDemande != null) {
-          Tools.demandesListSaved?.demandes?[selectedIndex] =
-              Tools.selectedDemande!;
+        if (selectedIndex != null && selectedIndex >= 0 && selectedDemande != null) {
+          demandesListSaved?.demandes?[selectedIndex] = selectedDemande!;
         }
-
         return true;
       } else {
-        throw Exception('error fetching posts');
+        print("[ERROR] Non-200 response in refreshSelectedDemande");
+        return false;
       }
     } on DioError catch (e) {
-      print("**************DioError***********");
-      print(e);
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx and is also not 304.
-      if (e.response != null) {
-        //        print(e.response.data);
-        //        print(e.response.headers);
-        //        print(e.response.);
-        //           print("**->REQUEST ${e.response?.re.uri}#${Transformer.urlEncodeMap(e.response?.request.data)} ");
-        throw (e.response?.statusMessage ?? "");
-      } else {
-        // Something happened in setting up or sending the request that triggered an Error
-        //        print(e.request);
-        //        print(e.message);
-      }
+      print("[ERROR] DioError in refreshSelectedDemande: ${e.message}");
+      return false;
     } catch (e) {
-      // throw ('API ERROR');
-      print("API ERROR ${e}");
+      print("[ERROR] Exception in refreshSelectedDemande: $e");
       return false;
     }
-
-    return false;
   }
 
-  // static Future<File?> compressAndGetFile(File file, String targetPath) async {
-  //   var result = await FlutterImageCompress.compressAndGetFile(
-  //       file.absolute.path, targetPath,
-  //       quality: 60, minWidth: 800, minHeight: 600);
-  //
-  //   return result;
-  // }
-
-  static ConnectivityResult? connectivityResult;
-
+  /// Returns the appropriate state from the connectivity result.
   static getStateFromConnectivity() {
-    if (Tools.connectivityResult == ConnectivityResult.wifi) {
+    print("[INFO] getStateFromConnectivity started");
+    if (connectivityResult == ConnectivityResult.wifi) {
       return InternetConnected(connectionType: ConnectionType.wifi);
-    } else if (Tools.connectivityResult == ConnectivityResult.mobile) {
+    } else if (connectivityResult == ConnectivityResult.mobile) {
       return InternetConnected(connectionType: ConnectionType.mobile);
-    } else if (Tools.connectivityResult == ConnectivityResult.none) {
+    } else if (connectivityResult == ConnectivityResult.none) {
       return InternetDisconnected();
     }
-
     return InternetLoading();
   }
 
+  /// Attempts to get a formatted address from the current latitude and longitude.
   static Future<String> getAddressFromLatLng() async {
-    print("call function getAddressFromLatLng");
-    String coordinateString = "";
-
-    // try {
-
-    Position? position = await determinePosition();
-
-    if (position != null) {
-      coordinateString =
-          "( latitude = ${position.latitude}   longitude =  ${position.longitude} )";
-
-      List<Placemark> placemarks =
-          await placemarkFromCoordinates(position.latitude, position.longitude);
-      Placemark place = placemarks[0];
-      print(place);
-
-      String fullAddess =
-          " ${place.locality}, ${place.postalCode}, ${place.country}";
-
-      return coordinateString + " " + fullAddess;
-      // return "${position.}, ${place.postalCode}, ${place.country}"
-    }
-
-    // } catch (e) {
-    //   // print()
-    //   print(e);
-    // }
-
-    return coordinateString;
+    print("[INFO] getAddressFromLatLng started");
+    Position position = await determinePosition();
+    String coordinateString =
+        "( latitude = ${position.latitude} longitude = ${position.longitude} )";
+    List<Placemark> placemarks =
+    await placemarkFromCoordinates(position.latitude, position.longitude);
+    Placemark place = placemarks[0];
+    String fullAddress = " ${place.locality}, ${place.postalCode}, ${place.country}";
+    return "$coordinateString $fullAddress";
   }
 
-  // static Future<XFile?> compressAndGetFile(File file, String targetPath,
-  //     [int quality = 80]) async {
-  //   var result = await FlutterImageCompress.compressAndGetFile(
-  //     file.absolute.path,
-  //     targetPath,
-  //     quality: quality,
-  //   );
-  //
-  //   print(file.lengthSync());
-  //   // print(result?.lengthSync());
-  //
-  //   return result;
-  // }
-
-  static getColorByEtatId(String? etatId) {
-    if (etatId != null) {
-      if (etatId == Tools.ETAT_EN_COURS) {
-        return Colors.transparent;
-      } else if (etatId == Tools.ETAT_PLANIFIE) {
-        return Colors.orange;
-      } else if (etatId == Tools.ETAT_RESOLU) {
-        return Colors.green;
-      } else if (etatId == Tools.ETAT_ANNULE) {
-        return Colors.red;
-      }
-    }
-
+  /// Returns a color based on the state ID.
+  static Color getColorByEtatId(String? etatId) {
+    if (etatId == ETAT_EN_COURS) return Colors.transparent;
+    if (etatId == ETAT_PLANIFIE) return Colors.orange;
+    if (etatId == ETAT_RESOLU) return Colors.green;
+    if (etatId == ETAT_ANNULE) return Colors.red;
     return Colors.transparent;
   }
 }
