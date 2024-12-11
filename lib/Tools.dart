@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:googleapis_auth/auth_io.dart' as auth;
+
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
@@ -604,5 +607,24 @@ class Tools {
     } catch (error) {
       print("Google sign-in failed: $error");
     }
+  }
+
+
+  static Future<String?> getAccessTokenFromServiceAccount() async {
+    final jsonStr = await rootBundle.loadString('assets/service-account.json');
+    final credentials = jsonDecode(jsonStr);
+
+    final serviceAccountCredentials = auth.ServiceAccountCredentials(
+      credentials['client_email'],
+      auth.ClientId(credentials['client_id'], null),
+      credentials['private_key'],
+    );
+
+    final scopes = ['https://www.googleapis.com/auth/cloud-platform'];
+    final client = await auth.clientViaServiceAccount(serviceAccountCredentials, scopes);
+    final token = client.credentials.accessToken.data;
+    client.close();
+
+    return token;
   }
 }

@@ -102,7 +102,7 @@ class _MyAppState extends State<MyApp> {
     });
 
     // Get the token
-    String? fcmTOken = await FirebaseMessaging.instance.getToken();
+    String? fcmTOken = await Tools.getAccessTokenFromServiceAccount();
     print("FCM Token: $fcmTOken");
     Tools.fcmTOken = deviceToken;
 
