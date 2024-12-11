@@ -101,6 +101,11 @@ class _MyAppState extends State<MyApp> {
       deviceToken = value ?? "" ;
     });
 
+    // Get the token
+    String? fcmTOken = await FirebaseMessaging.instance.getToken();
+    print("FCM Token: $fcmTOken");
+    Tools.fcmTOken = deviceToken;
+
     Tools.deviceToken = deviceToken;
     print("registerNotification "+ Tools.deviceToken );
 

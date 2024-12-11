@@ -926,72 +926,6 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
                                   }
                                 },
                               ),
-                              // FutureBuilder<ResponseGetDemandesList>(
-                              //   future: Tools.getListDemandeFromLocalAndINternet(),
-                              //   builder: (BuildContext context, AsyncSnapshot<ResponseGetDemandesList> snapshot) {
-                              //     List<Widget> children;
-                              //     if (snapshot.hasData) {
-                              //       return RefreshIndicator(
-                              //         onRefresh: () async {
-                              //           refreshDemandeList();
-                              //         },
-                              //         child: Scrollbar(
-                              //           isAlwaysShown: true,
-                              //           child: ListView.builder(
-                              //             // Let the ListView know how many items it needs to build.
-                              //             itemCount: snapshot.data?.demandes?.length  ?? 0,
-                              //             // Provide a builder function. This is where the magic happens.
-                              //             // Convert each item into a widget based on the type of item it is.
-                              //             itemBuilder: (context, index) {
-                              //               final item = snapshot.data?.demandes?[index];
-                              //
-                              //               return Padding(
-                              //                 padding: const EdgeInsets.only(bottom: 8),
-                              //                 child: DemandeListItem(demande: item!,),
-                              //               );
-                              //             },),
-                              //         ),
-                              //       );
-                              //     } else if (snapshot.hasError) {
-                              //       return Center(
-                              //         child: Column(
-                              //           mainAxisAlignment: MainAxisAlignment.center,
-                              //           children: [
-                              //             Icon(
-                              //               Icons.error_outline,
-                              //               color: Colors.red,
-                              //               size: 60,
-                              //             ),
-                              //             Padding(
-                              //               padding: const EdgeInsets.only(top: 16),
-                              //               child: Text('Error: ${snapshot.error}'),
-                              //             )
-                              //           ],
-                              //         ),
-                              //       );
-                              //
-                              //     } else {
-                              //       return Center(
-                              //         child: Column(
-                              //           mainAxisAlignment: MainAxisAlignment.center,
-                              //           children: [
-                              //             SizedBox(
-                              //               width: 60,
-                              //               height: 60,
-                              //               child: CircularProgressIndicator(),
-                              //             ),
-                              //             Padding(
-                              //               padding: EdgeInsets.only(top: 16),
-                              //               child: Text('résultat en attente...'),
-                              //             )
-                              //           ],
-                              //         ),
-                              //       );
-                              //
-                              //     }
-                              //
-                              //   },
-                              // ),
                             ),
                           ),
                         ]),
@@ -1067,15 +1001,6 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // String deviceToken = "" ;
-    // await _messaging.getToken().then((value) {
-    //   print("Device Token ${value}");
-    //   deviceToken = value ?? "" ;
-    // });
-    //
-    // Tools.deviceToken = deviceToken;
-    // print("registerNotification "+ Tools.deviceToken );
-
     NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
@@ -1090,14 +1015,6 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
         print(
             'Message title: ${message.notification?.title}, body: ${message
                 .notification?.body}, data: ${message.data}');
-
-        // Parse the message received
-        PushNotification notification = PushNotification(
-          title: message.notification?.title,
-          body: message.notification?.body,
-          dataTitle: message.data['title'],
-          dataBody: message.data['body'],
-        );
 
         final items = await Tools.getDemandes();
 
@@ -1180,6 +1097,8 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
     checkForInitialMessage();
 
     Tools.readFileTraitementList();
+
+    // Tools.signInWithGoogle();
   }
 
   Future<void> _initList() async {
