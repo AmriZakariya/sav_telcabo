@@ -104,7 +104,7 @@ class _MyAppState extends State<MyApp> {
     // Get the token
     String? fcmTOken = await Tools.getAccessTokenFromServiceAccount();
     print("FCM Token: $fcmTOken");
-    Tools.fcmTOken = deviceToken;
+    Tools.fcmToken = deviceToken;
 
     Tools.deviceToken = deviceToken;
     print("registerNotification "+ Tools.deviceToken );

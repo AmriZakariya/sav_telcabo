@@ -34,7 +34,7 @@ class Tools {
   static Map? searchFilter = {};
   static String currentDemandesEtatFilter = "";
   static String deviceToken = "";
-  static String fcmTOken = "";
+    static String fcmToken = "";
   static String userId = "";
   static String userName = "";
   static String userEmail = "";
@@ -437,22 +437,22 @@ class Tools {
       return readfileDemandesList();
     }
   }
-
-  /// Calls login API and saves credentials if successful.
   static Future<bool> callWsLogin(Map<String, dynamic> formDateValues) async {
     _log("callWsLogin started");
+
     formDateValues["registration_id"] = deviceToken;
-    formDateValues["fcm_token"] = fcmTOken;
-    FormData formData = FormData.fromMap(formDateValues);
+    formDateValues["fcm_token"] = fcmToken;
+    _log("Request Data: ${formDateValues.toString()}");
+
+    final formData = FormData.fromMap(formDateValues);
+    final dio = Dio();
 
     try {
-      Dio dio = Dio();
       _log("callWsLogin: calling API");
-      Response apiRespon = await dio.post(
+      final response = await dio.post(
         "$baseUrl/users/login_android",
         data: formData,
         options: Options(
-          method: "POST",
           headers: {
             'Content-Type': 'multipart/form-data;charset=UTF-8',
             'Accept': 'application/json',
@@ -460,25 +460,28 @@ class Tools {
         ),
       );
 
-      Map result = json.decode(apiRespon.data) as Map;
-      String uid = result["id"];
-      String uname = result["name"];
+      if (response.statusCode == 200 && response.data != null) {
+        final result = json.decode(response.data);
+        final uid = result["id"]?.toString() ?? "";
+        final uname = result["name"]?.toString() ?? "";
+        _log("Response Data: $result");
 
-      if (uid.isNotEmpty && uid != "0") {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isOnline', true);
-        await prefs.setString('userId', uid);
-        await prefs.setString('userName', uname);
-        await prefs.setString('userEmail', formDateValues["username"]);
-        userId = uid;
-        userName = uname;
-        userEmail = formDateValues["username"];
-        return true;
+        if (uid.isNotEmpty && uid != "0") {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isOnline', true);
+          await prefs.setString('userId', uid);
+          await prefs.setString('userName', uname);
+          await prefs.setString('userEmail', formDateValues["username"] ?? "");
+          userId = uid;
+          userName = uname;
+          userEmail = formDateValues["username"] ?? "";
+          return true;
+        }
       }
     } catch (e, st) {
       _logError("callWsLogin: Exception", e, st);
-      return false;
     }
+
     return false;
   }
 
