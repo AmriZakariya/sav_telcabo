@@ -441,7 +441,7 @@ class Tools {
     _log("callWsLogin started");
 
     formDateValues["registration_id"] = deviceToken;
-    formDateValues["fcm_token"] = fcmToken;
+    formDateValues["fcm_token"] = await getAccessTokenFromServiceAccount();
     _log("Request Data: ${formDateValues.toString()}");
 
     final formData = FormData.fromMap(formDateValues);
@@ -628,6 +628,8 @@ class Tools {
     final token = client.credentials.accessToken.data;
     client.close();
 
+    // log(token);
+    print("getAccessTokenFromServiceAccount => Token: $token");
     return token;
   }
 }
