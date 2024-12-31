@@ -124,7 +124,6 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
           ],
           child: Stack(
             children: [
-              // Remove the top-level SingleChildScrollView and rely on ListView for performance.
               Column(
                 children: <Widget>[
                   SizedBox(height: 50.0),
@@ -216,268 +215,264 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
                                     if (demande == null) return SizedBox.shrink();
 
                                     return Container(
-                                      margin: const EdgeInsets.only(bottom: 8, left: 15),
-                                      decoration: BoxDecoration(
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Tools.getColorByEtatId(demande.etatId)
-                                                .withOpacity(0.5),
-                                            spreadRadius: 1,
-                                            blurRadius: 1,
-                                            offset: Offset(0, 0),
-                                          ),
-                                        ],
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          // Header row
-                                          Container(
-                                            width: double.infinity,
-                                            height: 65,
-                                            decoration: BoxDecoration(
-                                              color: Tools.getColorByEtatId(demande.etatId),
-                                              borderRadius: BorderRadius.circular(20),
+                                        margin: const EdgeInsets.only(bottom: 8, left: 15),
+                                        decoration: BoxDecoration(
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Tools.getColorByEtatId(demande.etatId)
+                                                  .withOpacity(0.5),
+                                              spreadRadius: 1,
+                                              blurRadius: 1,
+                                              offset: Offset(0, 0),
                                             ),
-                                            child: Row(
-                                              children: [
-                                                SizedBox(width: 8),
-                                                Icon(Icons.person, size: 22),
-                                                Expanded(
-                                                  child: Text(
-                                                    demande.client ?? '',
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      color: Colors.black,
-                                                      fontSize: 16.0,
-                                                    ),
-                                                  ),
-                                                ),
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    Tools.selectedDemande = demande;
-                                                    Tools.currentStep = (demande.etape ?? 1) - 1;
-                                                    currentStepValueNotifier.value =
-                                                        Tools.currentStep;
-
-                                                    navigator.push(
-                                                      MaterialPageRoute(
-                                                        builder: (_) => DetailIntervention(),
-                                                      ),
-                                                    );
-                                                  },
-                                                  child: Tooltip(
-                                                    message: "Voir",
-                                                    child: Container(
-                                                      width: 30,
-                                                      height: 30,
-                                                      decoration: BoxDecoration(
-                                                        color: Tools.colorPrimary,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: Center(
-                                                        child: FaIcon(
-                                                          FontAwesomeIcons.solidEye,
-                                                          color: Colors.white,
-                                                          size: 15,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                SizedBox(width: 8),
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    Tools.selectedDemande = demande;
-                                                    Tools.currentStep = (demande.etape ?? 1) - 1;
-                                                    currentStepValueNotifier.value =
-                                                        Tools.currentStep;
-
-                                                    navigator
-                                                        .push(
-                                                      MaterialPageRoute(
-                                                        builder: (_) => InterventionForm(),
-                                                      ),
-                                                    )
-                                                        .then((_) => filterListByMap());
-                                                  },
-                                                  child: Tooltip(
-                                                    message: "Intervention",
-                                                    child: Container(
-                                                      width: 30,
-                                                      height: 30,
-                                                      decoration: BoxDecoration(
-                                                        color: Tools.colorPrimary,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: Center(
-                                                        child: FaIcon(
-                                                          FontAwesomeIcons.screwdriver,
-                                                          color: Colors.white,
-                                                          size: 15,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                SizedBox(width: 8),
-                                              ],
-                                            ),
-                                          ),
-
-                                          // ExpansionTile for details
-                                          ExpansionTile(
-                                            tilePadding: EdgeInsets.zero,
-                                            childrenPadding: EdgeInsets.all(15.0),
-                                            title: Center(child: Icon(Icons.expand_more)),
-                                            trailing: SizedBox.shrink(),
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  launch("tel://${demande.telephone ?? ""}");
-                                                },
-                                                child: InfoItemWidget(
-                                                  iconData: Icons.phone,
-                                                  title: "Contact Client :",
-                                                  description: demande.telephone ?? "",
-                                                  iconEnd: Padding(
-                                                    padding: const EdgeInsets.only(right: 5),
-                                                    child: FaIcon(
-                                                      FontAwesomeIcons.phoneVolume,
-                                                      size: 22,
-                                                      color: Tools.colorPrimary,
-                                                    ),
-                                                  ),
-                                                ),
+                                          ],
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            // Header row
+                                            Container(
+                                              width: double.infinity,
+                                              height: 65,
+                                              decoration: BoxDecoration(
+                                                color: Tools.getColorByEtatId(demande.etatId),
+                                                borderRadius: BorderRadius.circular(20),
                                               ),
-                                              SizedBox(height: 20.0),
-                                              InfoItemWidget(
+                                              child: Row(
+                                                children: [
+                                                  SizedBox(width: 8),
+                                                  Icon(Icons.person, size: 22),
+                                                  Expanded(
+                                                    child: Text(
+                                                      demande.client ?? '',
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        color: Colors.black,
+                                                        fontSize: 16.0,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      Tools.selectedDemande = demande;
+                                                      Tools.currentStep = (demande.etape ?? 1) - 1;
+                                                      currentStepValueNotifier.value = Tools.currentStep;
+
+                                                      navigator.push(
+                                                        MaterialPageRoute(
+                                                          builder: (_) => DetailIntervention(),
+                                                        ),
+                                                      );
+                                                    },
+                                                    child: Tooltip(
+                                                      message: "Voir",
+                                                      child: Container(
+                                                        width: 30,
+                                                        height: 30,
+                                                        decoration: BoxDecoration(
+                                                          color: Tools.colorPrimary,
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                        child: Center(
+                                                          child: FaIcon(
+                                                            FontAwesomeIcons.solidEye,
+                                                            color: Colors.white,
+                                                            size: 15,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      Tools.selectedDemande = demande;
+                                                      Tools.currentStep = (demande.etape ?? 1) - 1;
+                                                      currentStepValueNotifier.value = Tools.currentStep;
+
+                                                      navigator
+                                                          .push(
+                                                        MaterialPageRoute(
+                                                          builder: (_) => InterventionForm(),
+                                                        ),
+                                                      )
+                                                          .then((_) => filterListByMap());
+                                                    },
+                                                    child: Tooltip(
+                                                      message: "Intervention",
+                                                      child: Container(
+                                                        width: 30,
+                                                        height: 30,
+                                                        decoration: BoxDecoration(
+                                                          color: Tools.colorPrimary,
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                        child: Center(
+                                                          child: FaIcon(
+                                                            FontAwesomeIcons.screwdriver,
+                                                            color: Colors.white,
+                                                            size: 15,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                ],
+                                              ),
+                                            ),
+
+                                            // ExpansionTile for details
+                                            ExpansionTile(
+                                              tilePadding: EdgeInsets.zero,
+                                              childrenPadding: EdgeInsets.all(15.0),
+                                              title: Center(child: Icon(Icons.expand_more)),
+                                              trailing: SizedBox.shrink(),
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    launch("tel://${demande.telephone ?? ""}");
+                                                  },
+                                                  child: InfoItemWidget(
+                                                    iconData: Icons.phone,
+                                                    title: "Contact Client :",
+                                                    description: demande.telephone ?? "",
+                                                    iconEnd: Padding(
+                                                      padding: const EdgeInsets.only(right: 5),
+                                                      child: FaIcon(
+                                                        FontAwesomeIcons.phoneVolume,
+                                                        size: 22,
+                                                        color: Tools.colorPrimary,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(height: 20.0),
+                                                InfoItemWidget(
                                                   iconData: Icons.list,
                                                   title: "Type :",
-                                                  description: demande.type ?? ""),
-                                              SizedBox(height: 20.0),
-                                              InfoItemWidget(
+                                                  description: demande.type ?? "",
+                                                ),
+                                                SizedBox(height: 20.0),
+                                                InfoItemWidget(
                                                   iconData: Icons.list,
                                                   title: "CASE ID : ",
-                                                  description: demande.caseId ?? ""),
-                                              SizedBox(height: 20.0),
-                                              InfoItemWidget(
+                                                  description: demande.caseId ?? "",
+                                                ),
+                                                SizedBox(height: 20.0),
+                                                InfoItemWidget(
                                                   iconData: Icons.list,
                                                   title: "Référence  : ",
-                                                  description: demande.ref ?? ""),
-                                              SizedBox(height: 20.0),
-                                              InfoItemWidget(
+                                                  description: demande.ref ?? "",
+                                                ),
+                                                SizedBox(height: 20.0),
+                                                InfoItemWidget(
                                                   iconData: Icons.list,
                                                   title: "Description : ",
-                                                  description: demande.description ?? ""),
-                                              SizedBox(height: 20.0),
-                                              InfoItemWidget(
+                                                  description: demande.description ?? "",
+                                                ),
+                                                SizedBox(height: 20.0),
+                                                InfoItemWidget(
                                                   iconData: Icons.list,
                                                   title: "Offre tarifaire : ",
-                                                  description: demande.nomPlanTarifaire ?? ""),
-                                              SizedBox(height: 20.0),
-                                              InfoItemWidget(
-                                                iconData: Icons.location_city_sharp,
-                                                icon: FaIcon(
-                                                  FontAwesomeIcons.city,
-                                                  size: 18,
+                                                  description: demande.nomPlanTarifaire ?? "",
                                                 ),
-                                                title: "Ville :",
-                                                description: demande.ville ?? "",
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              InfoItemWidget(
-                                                iconData: Icons.list_alt,
-                                                icon: FaIcon(
-                                                  FontAwesomeIcons.signHanging,
-                                                  size: 18,
+                                                SizedBox(height: 20.0),
+                                                InfoItemWidget(
+                                                  iconData: Icons.location_city_sharp,
+                                                  icon: FaIcon(
+                                                    FontAwesomeIcons.city,
+                                                    size: 18,
+                                                  ),
+                                                  title: "Ville :",
+                                                  description: demande.ville ?? "",
                                                 ),
-                                                title: "Plaque :",
-                                                description: demande.plaqueName ?? "",
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              InfoItemWidget(
-                                                iconData: Icons.edit_attributes_sharp,
-                                                title: "Etat :",
-                                                description: demande.etatName ?? "",
-                                              ),
-                                              SizedBox(height: 20.0),
-                                              Divider(),
-                                              SizedBox(height: 20.0),
-                                              Center(
-                                                child: Column(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  children: [
-                                                    DemandeBottomActionButton(
-                                                      text: "voir",
-                                                      backgroundColor: Colors.blue,
-                                                      icon: Icons.remove_red_eye,
-                                                      onPressed: () {
-                                                        Tools.selectedDemande = demande;
-                                                        Tools.currentStep =
-                                                            (demande.etape ?? 1) - 1;
-                                                        navigator.push(
-                                                          MaterialPageRoute(
-                                                            builder: (_) => DetailIntervention(),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                    DemandeBottomActionButton(
-                                                      text: "Planifier",
-                                                      backgroundColor: Colors.green,
-                                                      icon: Icons.date_range,
-                                                      onPressed: () {
-                                                        Tools.selectedDemande = demande;
-                                                        Tools.currentStep =
-                                                            (demande.etape ?? 1) - 1;
-                                                        navigator.push(
-                                                          MaterialPageRoute(
-                                                            builder: (_) =>
-                                                                PlanificationForm(),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                    DemandeBottomActionButton(
-                                                      text: "Annuler",
-                                                      backgroundColor: Colors.red,
-                                                      icon: Icons.cancel,
-                                                      onPressed: () {
-                                                        Tools.selectedDemande = demande;
-                                                        Tools.currentStep =
-                                                            (demande.etape ?? 1) - 1;
-                                                        navigator.push(
-                                                          MaterialPageRoute(
-                                                            builder: (_) =>
-                                                                AnnulationForm(),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                    DemandeBottomActionButton(
-                                                      text: "Intervention",
-                                                      backgroundColor: Colors.teal,
-                                                      icon: FontAwesomeIcons.screwdriver,
-                                                      onPressed: () {
-                                                        Tools.selectedDemande = demande;
-                                                        Tools.currentStep =
-                                                            (demande.etape ?? 1) - 1;
-                                                        navigator.push(
-                                                          MaterialPageRoute(
-                                                            builder: (_) =>
-                                                                InterventionForm(),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                  ],
+                                                SizedBox(height: 20.0),
+                                                InfoItemWidget(
+                                                  iconData: Icons.list_alt,
+                                                  icon: FaIcon(
+                                                    FontAwesomeIcons.signHanging,
+                                                    size: 18,
+                                                  ),
+                                                  title: "Plaque :",
+                                                  description: demande.plaqueName ?? "",
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
+                                                SizedBox(height: 20.0),
+                                                InfoItemWidget(
+                                                  iconData: Icons.edit_attributes_sharp,
+                                                  title: "Etat :",
+                                                  description: demande.etatName ?? "",
+                                                ),
+                                                SizedBox(height: 20.0),
+                                                Divider(),
+                                                SizedBox(height: 20.0),
+                                                Center(
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      DemandeBottomActionButton(
+                                                        text: "voir",
+                                                        backgroundColor: Colors.blue,
+                                                        icon: Icons.remove_red_eye,
+                                                        onPressed: () {
+                                                          Tools.selectedDemande = demande;
+                                                          Tools.currentStep = (demande.etape ?? 1) - 1;
+                                                          navigator.push(
+                                                            MaterialPageRoute(
+                                                              builder: (_) => DetailIntervention(),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                      DemandeBottomActionButton(
+                                                        text: "Planifier",
+                                                        backgroundColor: Colors.green,
+                                                        icon: Icons.date_range,
+                                                        onPressed: () {
+                                                          Tools.selectedDemande = demande;
+                                                          Tools.currentStep = (demande.etape ?? 1) - 1;
+                                                          navigator.push(
+                                                            MaterialPageRoute(
+                                                              builder: (_) => PlanificationForm(),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                      DemandeBottomActionButton(
+                                                        text: "Annuler",
+                                                        backgroundColor: Colors.red,
+                                                        icon: Icons.cancel,
+                                                        onPressed: () {
+                                                          Tools.selectedDemande = demande;
+                                                          Tools.currentStep = (demande.etape ?? 1) - 1;
+                                                          navigator.push(
+                                                            MaterialPageRoute(
+                                                              builder: (_) => AnnulationForm(),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                      DemandeBottomActionButton(
+                                                        text: "Intervention",
+                                                        backgroundColor: Colors.teal,
+                                                        icon: FontAwesomeIcons.screwdriver,
+                                                        onPressed: () {
+                                                          Tools.selectedDemande = demande;
+                                                          Tools.currentStep = (demande.etape ?? 1) - 1;
+                                                          navigator.push(
+                                                            MaterialPageRoute(
+                                                              builder: (_) => InterventionForm(),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        )
                                     );
                                   },
                                 ),
