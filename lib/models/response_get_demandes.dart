@@ -1,3 +1,5 @@
+import 'response_get_liste_pannes.dart';
+
 class ResponseGetDemandesList {
   List<Demande>? demandes;
 
@@ -93,6 +95,7 @@ class Demande {
   List<Commentaire>? commentaires;
   List<String>? demandePanne;
   List<String>? demandeSolution;
+  List<Panne>? pannes;
 
   var etape = 1;
 
@@ -154,6 +157,7 @@ class Demande {
     this.commentaires,
     this.demandePanne,
     this.demandeSolution,
+    this.pannes,
   });
 
   factory Demande.fromJson(Map<String, dynamic> json) {
@@ -215,6 +219,7 @@ class Demande {
       commentaires: json['commentaires'] != null ? (json['commentaires'] as List).map((i) => Commentaire.fromJson(i)).toList() : null,
       demandePanne: json['DemandePanne'] != null ? List<String>.from(json['DemandePanne']) : null,
       demandeSolution: json['DemandeSolution'] != null ? List<String>.from(json['DemandeSolution']) : null,
+      pannes: json['pannes'] != null ? (json['pannes'] as List).map((i) => Panne.fromJson(i)).toList() : null,
     );
   }
 
@@ -277,6 +282,7 @@ class Demande {
       'commentaires': commentaires?.map((commentaire) => commentaire.toJson()).toList(),
       'DemandePanne': demandePanne,
       'DemandeSolution': demandeSolution,
+      'pannes': pannes?.map((panne) => panne.toJson()).toList(),
     };
   }
 }

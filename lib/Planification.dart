@@ -19,7 +19,7 @@ import 'package:telcabo/custome/ConnectivityCheckBlocBuilder.dart';
 import 'package:telcabo/models/response_get_liste_pannes.dart';
 import 'package:telcabo/ui/InterventionHeaderInfoWidget.dart';
 import 'package:telcabo/ui/LoadingDialog.dart';
-import 'package:timelines/timelines.dart';
+import 'package:timelines_plus/timelines_plus.dart';
 
 final GlobalKey<ScaffoldState> formStepperScaffoldKey =
     new GlobalKey<ScaffoldState>();

@@ -12,7 +12,7 @@ import 'package:horizontal_card_pager/card_item.dart';
 import 'package:horizontal_card_pager/horizontal_card_pager.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:telcabo/Tools.dart';
-import 'package:timelines/timelines.dart';
+import 'package:timelines_plus/timelines_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class InterventionHeaderInfoClientWidget extends StatelessWidget {

@@ -26,7 +26,7 @@ import 'package:telcabo/custome/QrScannerTextFieldBlocBuilder.dart';
 import 'package:telcabo/models/response_get_liste_pannes.dart';
 import 'package:telcabo/ui/InterventionHeaderInfoWidget.dart';
 import 'package:telcabo/ui/LoadingDialog.dart';
-import 'package:timelines/timelines.dart';
+import 'package:timelines_plus/timelines_plus.dart';
 
 final GlobalKey<ScaffoldState> formStepperScaffoldKey =
     new GlobalKey<ScaffoldState>();
@@ -740,10 +740,6 @@ class InterventionFormBLoc extends FormBloc<String, String> {
   void updateInputsFromDemande() async {
     try {
       // Update text fields
-      // panneDropDown.updateValue(Tools.selectedDemande?.panne);
-      // solutionEtatDropDown.updateValue(Tools.selectedDemande?.solution);
-      // articlesDropDown.updateValue(Tools.selectedDemande?.article);
-      // qteTextField.updateValue(Tools.selectedDemande?.qte ?? "1");
       commentaireTextField
           .updateValue(Tools.selectedDemande?.commentaire ?? "");
       commentaireSupTextField
@@ -759,36 +755,43 @@ class InterventionFormBLoc extends FormBloc<String, String> {
       snAncienneGponTextField
           .updateValue(Tools.selectedDemande?.snAnGpon ?? "");
 
-      // // Fetch dropdown options and update them
-      // var responseGetFieldOptions =
-      // await Tools.getFieldOptionsFromLocalAndInternet();
-      //
-      // updateDropdownItemsData(
-      //   fieldOptionGroups: responseGetFieldOptions.fieldOptions,
-      //   dropdown: panneDropDown,
-      //   key: 'panne',
-      //   selectedId: Tools.selectedDemande?.demandePanne
-      // );
-      //
-      // updateDropdownItemsData(
-      //   fieldOptionGroups: responseGetFieldOptions.fieldOptions,
-      //   dropdown: solutionEtatDropDown,
-      //   key: 'solution',
-      //   selectedId: Tools.selectedDemande?.solution?.id,
-      // );
-      //
-      // updateDropdownItemsData(
-      //   fieldOptionGroups: responseGetFieldOptions.fieldOptions,
-      //   dropdown: articlesDropDown,
-      //   key: 'article',
-      //   selectedId: Tools.selectedDemande?.article?.id,
-      // );
+      // Update dropdowns
+      // final selectedPanne = Tools.selectedDemande?.pannes?.first;
+      // responseGetListPannes.pannes?.firstWhere Tools.selectedDemande?.pannes?.first;
+      final selectedPanne = responseGetListPannes.pannes?.firstWhere(
+          (element) => element.id == Tools.selectedDemande?.pannes?.first.id);
+      if (selectedPanne != null) {
+        panneDropDown.updateValue(selectedPanne);
 
-      // Handle date fields or any additional logic
-      // For example, update any dynamic date fields if required
+        // Update solutions dropdown based on selected panne
+        solutionEtatDropDown.updateItems(selectedPanne.solutions ?? []);
+
+        final selectedSolution = selectedPanne.solutions?.first;
+
+        if (selectedSolution != null) {
+          solutionEtatDropDown.updateValue(selectedSolution);
+          updateDropdownById(solutionEtatDropDown, selectedSolution.id);
+
+          // Update articles dropdown and other related fields based on solution
+          if (selectedSolution.hasQuantity == true) {
+            qteTextField.updateValue(selectedSolution.quantity ?? "1");
+          }
+
+          if (selectedSolution.hasExtra == true) {
+            articlesDropDown.updateItems(selectedSolution.articles ?? []);
+            final selectedArticle = selectedSolution.articles?.first;
+
+            if (selectedArticle != null) {
+              articlesDropDown.updateValue(selectedArticle);
+            }
+          }
+        }
+      }
+
+      // Handle any additional dynamic fields or logic here
     } catch (e) {
       print(e);
-      // Handle error (e.g., display an error message or fallback behavior)
+      // Handle error (e.g., log error, show a message, etc.)
     }
   }
 
@@ -820,6 +823,13 @@ class InterventionFormBLoc extends FormBloc<String, String> {
         }
       }
     });
+  }
+
+  void updateDropdownById(SelectFieldBloc<Solution, dynamic> solutionEtatDropDown, String? id) {
+    final selectedSolution = solutionEtatDropDown.item?.firstWhere((element) => element.id == id);
+    if (selectedSolution != null) {
+      solutionEtatDropDown.updateValue(selectedSolution);
+    }
   }
 }
 

@@ -61,8 +61,9 @@ class Solution {
   bool? hasQuantity = false;
   bool? hasExtra = false;
   List<Article>? articles;
+  String? quantity;
 
-  Solution({this.id, this.name, this.hasQuantity, this.hasExtra, this.articles});
+  Solution({this.id, this.name, this.hasQuantity, this.hasExtra, this.articles, this.quantity});
 
   Solution.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -75,6 +76,7 @@ class Solution {
         articles!.add(new Article.fromJson(v));
       });
     }
+    quantity = json['quantity'];
   }
 
   Map<String, dynamic> toJson() {
@@ -86,6 +88,7 @@ class Solution {
     if (this.articles != null) {
       data['articles'] = this.articles!.map((v) => v.toJson()).toList();
     }
+    data['quantity'] = this.quantity;
     return data;
   }
 }
