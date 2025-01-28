@@ -53,6 +53,18 @@ class Panne {
     }
     return data;
   }
+
+  // Override == operator
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true; // If the objects are the same reference
+    if (other is! Panne) return false; // Ensure the object is of type Panne
+    return id == other.id; // Compare based on id
+  }
+
+  // Override hashCode
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class Solution {
@@ -62,8 +74,9 @@ class Solution {
   bool? hasExtra = false;
   List<Article>? articles;
   String? quantity;
+  String? articleId;
 
-  Solution({this.id, this.name, this.hasQuantity, this.hasExtra, this.articles, this.quantity});
+  Solution({this.id, this.name, this.hasQuantity, this.hasExtra, this.articles, this.quantity, this.articleId});
 
   Solution.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -77,6 +90,7 @@ class Solution {
       });
     }
     quantity = json['quantity'];
+    articleId = json['article_id'];
   }
 
   Map<String, dynamic> toJson() {
@@ -89,8 +103,21 @@ class Solution {
       data['articles'] = this.articles!.map((v) => v.toJson()).toList();
     }
     data['quantity'] = this.quantity;
+    data['article_id'] = this.articleId;
     return data;
   }
+
+  // Override == operator
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! Solution) return false;
+    return id == other.id;
+  }
+
+  // Override hashCode
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class Article {
@@ -110,4 +137,16 @@ class Article {
     data['name'] = this.name;
     return data;
   }
+
+  // Override == operator
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! Article) return false;
+    return id == other.id;
+  }
+
+  // Override hashCode
+  @override
+  int get hashCode => id.hashCode;
 }

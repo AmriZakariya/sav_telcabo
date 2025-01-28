@@ -82,19 +82,6 @@ class InterventionFormBLoc extends FormBloc<String, String> {
             qteTextField_dynamic,
           ]);
 
-          // if (solutionEtatDropDown.value?.hasExtra == false) {
-          //   removeFieldBlocs(fieldBlocs: [
-          //     adresseMacTextField,
-          //     snRouteurTextField,
-          //     snGponTextField,
-          //     macAncienneBoxTextField,
-          //     snAncienneBoxTextField,
-          //     snAncienneGponTextField,
-          //     articlesDropDown,
-          //   ]);
-          //
-          // }
-
           solutionEtatDropDown_dynamic
               .updateItems(selectedPanne?.solutions ?? []);
           addFieldBloc(fieldBloc: solutionEtatDropDown_dynamic);
@@ -115,11 +102,6 @@ class InterventionFormBLoc extends FormBloc<String, String> {
           if (selectedSolution?.hasQuantity == true) {
             addFieldBloc(fieldBloc: qteTextField_dynamic);
           }
-
-          // if (selectedSolution?.hasExtra == true) {
-          //   articlesDropDown.updateItems(selectedSolution?.articles ?? []);
-          //   addFieldBloc(fieldBloc: articlesDropDown);
-          // }
         },
       );
 
@@ -739,9 +721,12 @@ class InterventionFormBLoc extends FormBloc<String, String> {
 
   void updateInputsFromDemande() async {
     try {
+      // Logging the start of the function
+      print("Updating inputs from the selected demande...");
+
       // Update text fields
-      commentaireTextField
-          .updateValue(Tools.selectedDemande?.commentaire ?? "");
+      print("Updating text fields...");
+      commentaireTextField.updateValue(Tools.selectedDemande?.commentaire ?? "");
       commentaireSupTextField
           .updateValue(Tools.selectedDemande?.commentaireSup ?? "");
       latitudeTextField.updateValue(Tools.selectedDemande?.latitude ?? "");
@@ -749,49 +734,76 @@ class InterventionFormBLoc extends FormBloc<String, String> {
       adresseMacTextField.updateValue(Tools.selectedDemande?.adresseMac ?? "");
       snRouteurTextField.updateValue(Tools.selectedDemande?.snRouteur ?? "");
       snGponTextField.updateValue(Tools.selectedDemande?.snGpon ?? "");
-      macAncienneBoxTextField
-          .updateValue(Tools.selectedDemande?.macAnBox ?? "");
+      macAncienneBoxTextField.updateValue(Tools.selectedDemande?.macAnBox ?? "");
       snAncienneBoxTextField.updateValue(Tools.selectedDemande?.snAnBox ?? "");
-      snAncienneGponTextField
-          .updateValue(Tools.selectedDemande?.snAnGpon ?? "");
+      snAncienneGponTextField.updateValue(Tools.selectedDemande?.snAnGpon ?? "");
 
       // Update dropdowns
-      // final selectedPanne = Tools.selectedDemande?.pannes?.first;
-      // responseGetListPannes.pannes?.firstWhere Tools.selectedDemande?.pannes?.first;
-      final selectedPanne = responseGetListPannes.pannes?.firstWhere(
-          (element) => element.id == Tools.selectedDemande?.pannes?.first.id);
-      if (selectedPanne != null) {
-        panneDropDown.updateValue(selectedPanne);
+      print("Updating dropdowns...");
+      final selectedPanne = Tools.selectedDemande?.pannes?.last;
+      panneDropDown.updateValue(selectedPanne);
 
-        // Update solutions dropdown based on selected panne
-        solutionEtatDropDown.updateItems(selectedPanne.solutions ?? []);
+      // Fetch all solutions
+      final allSolutions = responseGetListPannes.pannes
+          ?.expand((element) => element.solutions ?? [])
+          .toList();
 
-        final selectedSolution = selectedPanne.solutions?.first;
+      final currentPanne = responseGetListPannes.pannes
+          ?.firstWhere(
+            (panne) => panne.id == selectedPanne?.id,
+        orElse: () => Panne(),
+      );
+      final currentPanneSolutions = currentPanne?.solutions;
 
-        if (selectedSolution != null) {
-          solutionEtatDropDown.updateValue(selectedSolution);
-          updateDropdownById(solutionEtatDropDown, selectedSolution.id);
+      Solution? remoteSelectedSolution = selectedPanne?.solutions?.first;
+      final selectedSolution = allSolutions?.firstWhere(
+            (solution) => solution.id == remoteSelectedSolution?.id,
+        orElse: () => null,
+      );
 
-          // Update articles dropdown and other related fields based on solution
-          if (selectedSolution.hasQuantity == true) {
-            qteTextField.updateValue(selectedSolution.quantity ?? "1");
-          }
+      if (selectedSolution != null) {
+        print("Selected solution found: ${selectedSolution.id}");
+        solutionEtatDropDown.updateItems(currentPanneSolutions ?? []);
+        solutionEtatDropDown.updateValue(selectedSolution);
 
-          if (selectedSolution.hasExtra == true) {
-            articlesDropDown.updateItems(selectedSolution.articles ?? []);
-            final selectedArticle = selectedSolution.articles?.first;
+        // Update articles dropdown and related fields
+        if (remoteSelectedSolution?.hasQuantity == true) {
+          print("Updating quantity field...");
+          qteTextField.updateValue(remoteSelectedSolution?.quantity ?? "1");
+        }
 
-            if (selectedArticle != null) {
-              articlesDropDown.updateValue(selectedArticle);
-            }
+        if (remoteSelectedSolution?.articleId?.isNotEmpty == true) {
+          print("Fetching articles for the selected solution...");
+          final currentSolutionArticles = currentPanneSolutions
+              ?.firstWhere(
+                (solution) => solution.id == selectedSolution.id,
+            orElse: () => Solution(),
+          )
+              .articles;
+
+          Article? selectedArticle = currentSolutionArticles?.firstWhere(
+                (article) => article.id == remoteSelectedSolution?.articleId,
+            orElse: () => Article(),
+          );
+
+          if (selectedArticle != null) {
+            print("Selected article found: ${selectedArticle.id}");
+            articlesDropDown.updateItems(currentSolutionArticles ?? []);
+            articlesDropDown.updateValue(selectedArticle);
+          } else {
+            print("No matching article found for articleId: ${remoteSelectedSolution?.articleId}");
           }
         }
+      } else {
+        print("No matching solution found.");
       }
 
-      // Handle any additional dynamic fields or logic here
+      // Handle any additional dynamic fields or logic
+      print("Inputs updated successfully.");
     } catch (e) {
-      print(e);
-      // Handle error (e.g., log error, show a message, etc.)
+      // Log error details
+      print("Error in updateInputsFromDemande: $e");
+      // Optionally, you could add error reporting here
     }
   }
 
@@ -823,13 +835,6 @@ class InterventionFormBLoc extends FormBloc<String, String> {
         }
       }
     });
-  }
-
-  void updateDropdownById(SelectFieldBloc<Solution, dynamic> solutionEtatDropDown, String? id) {
-    final selectedSolution = solutionEtatDropDown.item?.firstWhere((element) => element.id == id);
-    if (selectedSolution != null) {
-      solutionEtatDropDown.updateValue(selectedSolution);
-    }
   }
 }
 
@@ -2006,29 +2011,101 @@ class NamedIcon extends StatelessWidget {
 }
 
 class SuccessScreen extends StatelessWidget {
-  const SuccessScreen({Key? key}) : super(key: key);
+  final String message;
+  final String subMessage;
+  final String buttonText;
+
+  const SuccessScreen({
+    Key? key,
+    this.message = 'Succès !',
+    this.subMessage = 'Votre intervention a été réalisée avec succès.',
+    this.buttonText = 'Retour',
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // Clean background
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Icon(Icons.tag_faces, size: 100),
-            const SizedBox(height: 10),
-            const Text(
-              'Success',
-              style: TextStyle(fontSize: 54, color: Colors.black),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.replay),
-              label: const Text('AGAIN'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              // Success Animation or Icon
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.green.withOpacity(0.1),
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Icon(
+                  Icons.check_circle,
+                  size: 120,
+                  color: Colors.green, // Bright green for success
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              // Main Success Message
+              Text(
+                message,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+
+              // Sub-message for clarification
+              Text(
+                subMessage,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.black54,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+
+              // Stylish Done Button
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 40.0, vertical: 15.0),
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                  ),
+                  elevation: 5,
+                ),
+                child: Text(
+                  buttonText,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Optional Footer Text
+              Text(
+                'Merci pour votre confiance.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black38,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
