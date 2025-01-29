@@ -349,6 +349,11 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
                                                 ),
                                                 SizedBox(height: 20.0),
                                                 InfoItemWidget(
+                                                  iconData: Icons.edit_attributes_sharp,
+                                                  title: "Sip :",
+                                                  description: demande.accesReseau ?? "",
+                                                ),   SizedBox(height: 20.0),
+                                                InfoItemWidget(
                                                   iconData: Icons.list,
                                                   title: "Type :",
                                                   description: demande.type ?? "",
@@ -667,6 +672,7 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
     print("call function filterListByMap()");
     String filter_client = Tools.searchFilter?["client"] ?? "";
     String filter_contactClient = Tools.searchFilter?["contactClient"] ?? "";
+    String dateRdv = Tools.searchFilter?["date_rdv"] ?? "";
 
     final items = ResponseGetDemandesList(
         demandes: Tools.demandesListSaved?.demandes?.where((element) {
@@ -696,12 +702,54 @@ class _DemandeListState extends State<DemandeList> with WidgetsBindingObserver {
             }
           }
 
+          if (dateRdv.isNotEmpty) {
+            DateTime? dateRdvParsed;
+            try {
+              dateRdvParsed = DateTime.parse(dateRdv);
+            } catch (e) {
+              dateRdvParsed = null;
+            }
+
+            if (dateRdvParsed != null) {
+              DateTime? dateCreatedParsed;
+              try {
+                dateCreatedParsed = DateTime.parse(element.created ?? "");
+              } catch (e) {
+                dateCreatedParsed = null;
+              }
+
+              if (dateCreatedParsed == null ||
+                  dateCreatedParsed.year != dateRdvParsed.year ||
+                  dateCreatedParsed.month != dateRdvParsed.month ||
+                  dateCreatedParsed.day != dateRdvParsed.day) {
+                shouldAdd = false;
+              }
+            }
+          }
+
           return shouldAdd;
         }).toList());
 
     setState(() {
       demandesList = items;
     });
+  }
+
+  String normalizeDateFormat(String date) {
+    try {
+      List<String> parts = date.split(" ");
+      if (parts.length == 2) {
+        List<String> timeParts = parts[1].split(":");
+        if (timeParts.length == 3) {
+          // Ensure seconds have two digits
+          timeParts[2] = timeParts[2].padLeft(2, '0');
+          return "${parts[0]} ${timeParts.join(":")}";
+        }
+      }
+    } catch (e) {
+      return date; // Return original if there's an issue
+    }
+    return date;
   }
 
   Future<void> filterByType() async {
@@ -938,13 +986,24 @@ class SearchFIeldsFormBloc extends FormBloc<String, String> {
   final contactClient = TextFieldBloc(
       name: "contactClient",
       initialValue: Tools.searchFilter?["contactClient"] ?? "");
-
+  final dateRdvInputFieldBLoc = InputFieldBloc<DateTime?, Object>(
+    initialValue: null,
+    name: "date_rdv",
+    toJson: (value) {
+      final DateFormat formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
+      final String formatted = formatter.format(value ?? DateTime.now());
+      return formatted;
+    },
+  );
   SearchFIeldsFormBloc() : super() {
     addFieldBlocs(fieldBlocs: [
       client,
       typeDemande,
       contactClient,
+      dateRdvInputFieldBLoc,
     ]);
+
+    dateRdvInputFieldBLoc.updateValue(getSelectedDateInitialValue());
   }
 
   @override
@@ -958,6 +1017,18 @@ class SearchFIeldsFormBloc extends FormBloc<String, String> {
       emitSuccess(canSubmitAgain: true);
     } catch (e) {
       emitFailure();
+    }
+  }
+
+
+
+  static getSelectedDateInitialValue() {
+    DateTime? dateRdvParsed;
+    try {
+      dateRdvParsed = DateTime.parse(Tools.searchFilter?["date_rdv"] ?? "");
+      return dateRdvParsed;
+    } catch (e) {
+      return dateRdvParsed;
     }
   }
 }
@@ -1057,6 +1128,20 @@ class SearchFieldFormWidget extends StatelessWidget {
                               // size: 18,
                             ),
                           ),
+                        ),
+                      ),
+                      DateTimeFieldBlocBuilder(
+                        dateTimeFieldBloc: formBloc.dateRdvInputFieldBLoc,
+                        format: DateFormat('yyyy-MM-dd HH:mm'),
+                        //  Y-m-d H:i:s
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(1800),
+                        lastDate: DateTime(2100),
+                        canSelectTime: false,
+                        showClearIcon: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Date demande',
+                          prefixIcon: Icon(Icons.date_range),
                         ),
                       ),
                       Padding(

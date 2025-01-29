@@ -1,8 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QrScannerTextFieldBlocBuilder extends StatefulWidget {
   final TextFieldBloc<dynamic> qrCodeTextFieldBloc;
@@ -16,9 +14,7 @@ class QrScannerTextFieldBlocBuilder extends StatefulWidget {
     required this.formBloc,
     required this.iconField,
     required this.labelText,
-  })  : assert(qrCodeTextFieldBloc != null),
-        assert(formBloc != null),
-        super(key: key);
+  }) : super(key: key);
 
   @override
   State<QrScannerTextFieldBlocBuilder> createState() =>
@@ -27,40 +23,8 @@ class QrScannerTextFieldBlocBuilder extends StatefulWidget {
 
 class _QrScannerTextFieldBlocBuilderState
     extends State<QrScannerTextFieldBlocBuilder> {
-
-
   @override
   Widget build(BuildContext context) {
-    // print("MediaQuery.of(context).size.width / 4.9");
-    // print(MediaQuery.of(context).size.width / 4.9);
-
-    Future<dynamic> _popTime() async {
-      Navigator.of(context).pop();
-    }
-
-    // For this example we check how width or tall the device is and change the scanArea and overlay accordingly.
-    var scanArea = (MediaQuery.of(context).size.width < 400 ||
-            MediaQuery.of(context).size.height < 400)
-        ? 150.0
-        : 300.0;
-    // To ensure the Scanner view is properly sizes after rotation
-    // we need to listen for Flutter SizeChanged notification and update controller
-
-
-    // Future<String> _showDialog() async {
-    //   String barcodeScanRes;
-    //
-    //   try {
-    //     barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-    //         '#ff6666', 'Cancel', true, ScanMode.QR);
-    //     print(barcodeScanRes);
-    //   } on PlatformException {
-    //     barcodeScanRes = 'Failed to get platform version.';
-    //   }
-    //
-    //   return barcodeScanRes;
-    // }
-
     return BlocBuilder<TextFieldBloc, TextFieldBlocState>(
       bloc: widget.qrCodeTextFieldBloc,
       builder: (context, state) {
@@ -75,12 +39,10 @@ class _QrScannerTextFieldBlocBuilderState
                 decoration: InputDecoration(
                   labelText: widget.labelText,
                   prefixIcon: widget.iconField,
-                  disabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        width: 1,
-                        // color: Tools.colorPrimary
-                      ),
-                      borderRadius: BorderRadius.circular(20)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(width: 1),
+                  ),
                 ),
               ),
             ),
@@ -91,43 +53,69 @@ class _QrScannerTextFieldBlocBuilderState
                   true,
               child: ElevatedButton(
                 onPressed: () async {
-                  // Navigator.of(context).push(MaterialPageRoute(
-                  //   builder: (context) => const QRViewExample(),
-                  // ));
+                  final scannedValue = await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ScannerPage(),
+                    ),
+                  );
 
-                  // final result = await _showDialog();
-                  final result = "";
-              //                            final image = await ImagePicker.pickImage(
-              //                              source: ImageSource.gallery,
-              //                            );
+                  if (scannedValue != null && scannedValue is String) {
+                    String formattedValue = scannedValue;
 
-                  if (widget.qrCodeTextFieldBloc.name == "adresse_mac") {
-                    String formattedMAC = "";
-                    for (int i = 0; i < result.length; i++) {
-                      var char = result[i];
-                      formattedMAC += char;
-                      if ((i % 2 != 0) && (i < result.length - 1)) {
-                        formattedMAC += "-";
-                      }
+                    if (widget.qrCodeTextFieldBloc.name == "adresse_mac") {
+                      formattedValue = _formatMacAddress(scannedValue);
                     }
 
-                    widget.qrCodeTextFieldBloc.updateValue(formattedMAC);
-                  } else {
-                    widget.qrCodeTextFieldBloc
-                        .updateValue(result);
+                    setState(() {
+                      widget.qrCodeTextFieldBloc.updateValue(formattedValue);
+                    });
                   }
-                                },
+                },
                 style: ElevatedButton.styleFrom(
-                  // primary: Tools.colorPrimary,
-                  shape: CircleBorder(),
-                  padding: EdgeInsets.all(10),
+                  shape: const CircleBorder(),
+                  padding: const EdgeInsets.all(10),
+                  iconSize: 25,
                 ),
                 child: const Icon(Icons.qr_code),
               ),
             ),
-          ],
-        ));
+          ]),
+        );
       },
+    );
+  }
+
+  /// Formats MAC Address
+  String _formatMacAddress(String raw) {
+    String formattedMAC = "";
+    for (int i = 0; i < raw.length; i++) {
+      formattedMAC += raw[i];
+      if ((i % 2 != 0) && (i < raw.length - 1)) {
+        formattedMAC += "-";
+      }
+    }
+    return formattedMAC;
+  }
+}
+
+class ScannerPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Scan Code"),
+      ),
+      body: MobileScanner(
+        onDetect: (BarcodeCapture capture) {
+          final List<Barcode> barcodes = capture.barcodes;
+          if (barcodes.isNotEmpty) {
+            final String? scannedValue = barcodes.first.rawValue;
+            if (scannedValue != null) {
+              Navigator.of(context).pop(scannedValue); // Return scanned value
+            }
+          }
+        },
+      ),
     );
   }
 }
