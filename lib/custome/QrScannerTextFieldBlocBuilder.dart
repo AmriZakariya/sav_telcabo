@@ -98,24 +98,101 @@ class _QrScannerTextFieldBlocBuilderState
   }
 }
 
-class ScannerPage extends StatelessWidget {
+class ScannerPage extends StatefulWidget {
+  @override
+  _ScannerPageState createState() => _ScannerPageState();
+}
+
+class _ScannerPageState extends State<ScannerPage> {
+  final MobileScannerController controller = MobileScannerController();
+
+  @override
+  void dispose() {
+    controller.dispose(); // Release camera resources
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black, // Dark background for better contrast
       appBar: AppBar(
-        title: const Text("Scan Code"),
+        title: const Text("Scanner un QR Code"),
+        backgroundColor: Colors.black,
       ),
-      body: MobileScanner(
-        onDetect: (BarcodeCapture capture) {
-          final List<Barcode> barcodes = capture.barcodes;
-          if (barcodes.isNotEmpty) {
-            final String? scannedValue = barcodes.first.rawValue;
-            if (scannedValue != null) {
-              Navigator.of(context).pop(scannedValue); // Return scanned value
-            }
-          }
-        },
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: controller,
+            onDetect: (BarcodeCapture capture) async {
+              final List<Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                final String? scannedValue = barcodes.first.rawValue;
+                if (scannedValue != null) {
+                  await controller.stop(); // Stop scanner before closing
+                  if (context.mounted) {
+                    Navigator.of(context).pop(scannedValue);
+                  }
+                }
+              }
+            },
+          ),
+
+          // Overlay to indicate scan area
+          Center(
+            child: Stack(
+              children: [
+                Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white, width: 4),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        "Placez le code dans le cadre",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Animated Scan Line
+          Positioned(
+            top: MediaQuery.of(context).size.height / 2 - 125,
+            left: MediaQuery.of(context).size.width / 2 - 125,
+            child: SizedBox(
+              width: 250,
+              height: 250,
+              child: AnimatedAlign(
+                alignment: Alignment.bottomCenter,
+                duration: const Duration(seconds: 2),
+                curve: Curves.easeInOut,
+                child: Container(
+                  width: 250,
+                  height: 2,
+                  color: Colors.redAccent,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+
