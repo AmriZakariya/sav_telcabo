@@ -61,10 +61,10 @@ class _ImageFieldBlocBuilderState extends State<ImageFieldBlocBuilder> {
                                     try {
                                       final imageResult = await _pickImage();
                                       if (imageResult != null) {
-                                        final compressedImage =
-                                            await _compressImage(imageResult);
+                                        // final compressedImage =
+                                        //     await _compressImage(imageResult);
                                         widget.fileFieldBloc.updateValue(
-                                            XFile(compressedImage.path));
+                                            XFile(imageResult.path));
                                       }
                                     } finally {
                                       setState(() => isLoading = false);
@@ -74,11 +74,6 @@ class _ImageFieldBlocBuilderState extends State<ImageFieldBlocBuilder> {
                               : null,
                           child: _buildImageDisplay(fieldBlocState),
                         ),
-                  if (fieldBlocState.canShowError)
-                    Text(
-                      "Ce champ est obligatoire",
-                      style: TextStyle(color: Colors.red),
-                    ),
                 ],
               ),
             );
@@ -147,7 +142,8 @@ class _ImageFieldBlocBuilderState extends State<ImageFieldBlocBuilder> {
     });
   }
 
-  Widget _buildImageDisplay(InputFieldBlocState<XFile?, Object> fieldBlocState) {
+  Widget _buildImageDisplay(
+      InputFieldBlocState<XFile?, Object> fieldBlocState) {
     return Column(
       children: [
         Center(child: Text(widget.labelText, textAlign: TextAlign.center)),
@@ -171,11 +167,11 @@ class _ImageFieldBlocBuilderState extends State<ImageFieldBlocBuilder> {
                 borderRadius: BorderRadius.circular(10),
                 child: fieldBlocState.value != null
                     ? Image.file(
-                  File(fieldBlocState.value!.path),
-                  width: 90,
-                  height: 90,
-                  fit: BoxFit.cover,
-                )
+                        File(fieldBlocState.value!.path),
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.cover,
+                      )
                     : _buildPlaceholder(),
               ),
             ),
@@ -199,7 +195,7 @@ class _ImageFieldBlocBuilderState extends State<ImageFieldBlocBuilder> {
           child: CircularProgressIndicator(
             value: loadingProgress.expectedTotalBytes != null
                 ? loadingProgress.cumulativeBytesLoaded /
-                loadingProgress.expectedTotalBytes!
+                    loadingProgress.expectedTotalBytes!
                 : null,
           ),
         );
@@ -223,17 +219,16 @@ class _ImageFieldBlocBuilderState extends State<ImageFieldBlocBuilder> {
     );
   }
 
-
   String getImagePickerExistImageUrl() {
     String imageUrl = "${Tools.baseUrl}/img/demandes/";
 
     final imageMappings = {
       "photo_probleme": Tools.selectedDemande?.photoProbleme ?? "",
       "photo_signal": Tools.selectedDemande?.photoSignal ?? "",
-      "photo_resolution_probleme": Tools.selectedDemande?.photoResolutionProbleme ?? "",
+      "photo_resolution_probleme":
+          Tools.selectedDemande?.photoResolutionProbleme ?? "",
       "photo_sup1": Tools.selectedDemande?.photoSup1 ?? "",
       "photo_sup2": Tools.selectedDemande?.photoSup2 ?? "",
-
     };
 
     // Append the corresponding value based on the fileFieldBloc name

@@ -692,9 +692,10 @@ class InterventionFormBLoc extends FormBloc<String, String> {
 
           Tools.currentStep = (Tools.selectedDemande?.etape ?? 1) - 1;
           currentStepValueNotifier.value = Tools.currentStep;
-
-          emitSuccess(canSubmitAgain: true);
           clearInputs();
+          updateInputsFromDemande();
+          updateValidatorFromDemande();
+          emitSuccess(canSubmitAgain: true);
         } else {
           // writeToFileTraitementList(formDateValues);
 
@@ -1177,7 +1178,8 @@ class _InterventionFormState extends State<InterventionForm>
                     },
                     onSubmissionFailed: (context, state) {
                       print("FormBlocListener onSubmissionFailed ${state}");
-                      // LoadingDialog.hide(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Erreur de validation, veuillez vérifier les champs")));
                     },
                     child: Stack(
                       children: [
