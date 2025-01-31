@@ -495,7 +495,7 @@ class InterventionFormBLoc extends FormBloc<String, String> {
     print("override updateCurrentStep");
     print("Tools.currentStep ==> ${Tools.currentStep}");
 
-    clearInputs();
+    // clearInputs();
 
     currentStepValueNotifier.value = Tools.currentStep;
 
@@ -509,7 +509,7 @@ class InterventionFormBLoc extends FormBloc<String, String> {
 
     currentStepValueNotifier.value = Tools.currentStep;
 
-    clearInputs();
+    // clearInputs();
 
     super.previousStep();
   }
@@ -692,9 +692,7 @@ class InterventionFormBLoc extends FormBloc<String, String> {
 
           Tools.currentStep = (Tools.selectedDemande?.etape ?? 1) - 1;
           currentStepValueNotifier.value = Tools.currentStep;
-          clearInputs();
-          updateInputsFromDemande();
-          updateValidatorFromDemande();
+
           emitSuccess(canSubmitAgain: true);
         } else {
           // writeToFileTraitementList(formDateValues);
@@ -976,8 +974,7 @@ class _InterventionFormState extends State<InterventionForm>
                                 onPress: () async {
                                   print("share wtsp");
 
-                                  String msgShare =
-                                      getMsgShare(currentStepNotifier);
+                                  String msgShare = Tools.getMsgShare();
 
                                   print("msgShare ==> ${msgShare}");
 
@@ -1136,9 +1133,6 @@ class _InterventionFormState extends State<InterventionForm>
                         // autoCloseDuration: Duration(seconds: 2),
                         title: "Succès",
                       );
-
-                      Tools.currentStep = state.currentStep;
-                      context.read<InterventionFormBLoc>().clearInputs();
 
                       if (state.stepCompleted == state.lastStep) {
                         Navigator.of(context).pushReplacement(
@@ -1695,19 +1689,6 @@ class _InterventionFormState extends State<InterventionForm>
     );
   }
 
-  String getMsgShare(int currentStepNotifier) {
-    print("msgShare currentStepNotifier ==> $currentStepNotifier");
-
-    final demande = Tools.selectedDemande;
-
-    return '''REF: ${demande?.ref ?? ""}
-        CASE ID: ${demande?.caseId ?? ""}
-        VILLE: ${demande?.ville ?? ""}
-        CLIENT: ${demande?.client ?? ""}
-        PANNES: ${demande?.demandePanne ?? ""}
-        LOGIN_SIP: ${demande?.accesReseau ?? ""}
-        SOLUTIONS: ${demande?.demandeSolution ?? ""}''';
-  }
 
   Widget buildFieldBlocWidget(fieldBloc, index) {
     print(

@@ -26,8 +26,11 @@ import 'package:telcabo/ui/LoadingDialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
+final GlobalKey<_DemandeListState> demandeListKey = GlobalKey<_DemandeListState>();
 
 class DemandeList extends StatefulWidget {
+  DemandeList({Key? key}) : super(key: demandeListKey);
+
   @override
   State<DemandeList> createState() => _DemandeListState();
 }

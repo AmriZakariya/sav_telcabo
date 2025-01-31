@@ -223,6 +223,30 @@ class Demande {
     );
   }
 
+  // Method to get the list of pannes as a string
+  String getPannesListString() {
+    if (pannes == null || pannes!.isEmpty) return "";
+    return pannes!.map((panne) => panne.name ?? "").join(", ");
+  }
+
+  // Method to get the list of solutions as a string
+  String getSolutionsListString() {
+    if (pannes == null || pannes!.isEmpty) return "";
+
+    List<String> solutionsList = [];
+
+    for (Panne panne in pannes!) {
+      if (panne.solutions != null && panne.solutions!.isNotEmpty) {
+        solutionsList.addAll(
+            panne.solutions!.map((solution) => solution.name ?? "")
+        );
+      }
+    }
+
+    if (solutionsList.isEmpty) return "";
+    return solutionsList.join(", ");
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

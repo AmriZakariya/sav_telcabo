@@ -419,8 +419,8 @@ class _AnnulationFormState extends State<AnnulationForm>
                       onPress: () async {
                         print("share wtsp");
 
-                        String msgShare =
-                        getMsgShare(1);
+                        String msgShare = Tools.getMsgShare();
+
 
                         print("msgShare ==> ${msgShare}");
 
@@ -830,20 +830,6 @@ class _AnnulationFormState extends State<AnnulationForm>
         ],
       ),
     );
-  }
-
-   String getMsgShare(int currentStepNotifier) {
-    print("msgShare currentStepNotifier ==> $currentStepNotifier");
-
-    final demande = Tools.selectedDemande;
-
-    return '''REF: ${demande?.ref ?? ""}
-        CASE ID: ${demande?.caseId ?? ""}
-        VILLE: ${demande?.ville ?? ""}
-        CLIENT: ${demande?.client ?? ""}
-        PANNES: ${demande?.demandePanne ?? ""}
-        LOGIN_SIP: ${demande?.accesReseau ?? ""}
-        SOLUTIONS: ${demande?.demandeSolution ?? ""}''';
   }
 
   Widget buildSizedDivider() {

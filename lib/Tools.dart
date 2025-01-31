@@ -16,6 +16,7 @@ import 'package:image/image.dart' as imagePlugin;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:telcabo/DemandeList.dart';
 import 'package:telcabo/custome/ConnectivityCheckBlocBuilder.dart';
 import 'package:telcabo/models/response_get_demandes.dart';
 import 'models/response_get_liste_pannes.dart';
@@ -190,7 +191,7 @@ class Tools {
     try {
       _log("callWSSendMail: calling API");
       Response apiRespon = await dio.post(
-        "$baseUrl/traitements/send_mail",
+        "$baseUrl/traitements/send_email",
         data: formData,
         options: Options(
           method: "POST",
@@ -512,6 +513,7 @@ class Tools {
   static Future<bool> refreshSelectedDemande() async {
     _log("refreshSelectedDemande started");
     FormData formData = FormData.fromMap({"demande_id": selectedDemande?.id ?? ""});
+
     try {
       Dio dio = Dio()..interceptors.add(dioLoggerInterceptor);
       Response apiRespon = await dio.post(
@@ -536,6 +538,9 @@ class Tools {
 
         if (selectedIndex != null && selectedIndex >= 0 && selectedDemande != null) {
           demandesListSaved?.demandes?[selectedIndex] = selectedDemande!;
+
+          // Notify UI that the demandes list has been updated
+          demandeListKey.currentState?.filterListByMap();
         }
         return true;
       }
@@ -545,6 +550,7 @@ class Tools {
       return false;
     }
   }
+
 
   /// Returns the current connectivity state.
   static getStateFromConnectivity() {
@@ -631,5 +637,16 @@ class Tools {
     // log(token);
     print("getAccessTokenFromServiceAccount => Token: $token");
     return token;
+  }
+
+  static String getMsgShare() {
+    final demande = Tools.selectedDemande;
+    return '''REF: ${demande?.ref ?? ""}
+        CASE ID: ${demande?.caseId ?? ""}
+        VILLE: ${demande?.ville ?? ""}
+        CLIENT: ${demande?.client ?? ""}
+        LOGIN_SIP: ${demande?.accesReseau ?? ""}
+        PANNES: ${demande?.getPannesListString() ?? ""}
+        SOLUTIONS: ${demande?.getSolutionsListString() ?? ""}''';
   }
 }
